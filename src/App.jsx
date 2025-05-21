@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { getIcon } from './utils/iconUtils';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
+import MenuBuilder from './pages/MenuBuilder';
 
 // Header component with dark mode toggle
 const Header = ({ darkMode, toggleDarkMode }) => {
@@ -39,6 +40,9 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               </a>
               <a href="#inventory" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Inventory
+              </a>
+              <a href="/menu" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+                Menu
               </a>
             </nav>
           </div>
@@ -80,6 +84,9 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               </a>
               <a href="#inventory" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Inventory
+              </a>
+              <a href="/menu" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+                Menu
               </a>
             </nav>
           </div>
@@ -156,6 +163,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="/menu" element={<MenuBuilder />} />
           </Routes>
         </motion.div>
       </main>
