@@ -3,6 +3,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { getIcon } from './utils/iconUtils';
+import Tables from './pages/Tables';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import MenuBuilder from './pages/MenuBuilder';
@@ -16,6 +17,7 @@ const Header = ({ darkMode, toggleDarkMode }) => {
   const RestaurantIcon = getIcon('utensils');
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+          <Route path="/tables" element={<Tables />} />
   
   return (
     <header className="sticky top-0 z-40 w-full bg-white dark:bg-surface-800 shadow-sm border-b border-surface-200 dark:border-surface-700">
