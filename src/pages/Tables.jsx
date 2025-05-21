@@ -1193,9 +1193,9 @@ const Tables = () => {
                     )}
                     </div>
                   
-                ) : (
-                  <>
-                  isEditMode && selectedTable ? (
+                ) : isEditMode && selectedTable ? (
+                  <div className="mt-4">
+                    <div className="mt-4">
                       <div className="mt-4">
                         <div className="mt-4">
                           <h4 className="font-medium mb-3">Edit Table</h4>
@@ -1292,9 +1292,11 @@ const Tables = () => {
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="mt-4">
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4">
+                    {!tableAction ? (
                         {!tableAction ? (
                           <>
                             {/* Table actions */}
@@ -1350,9 +1352,7 @@ const Tables = () => {
                             </div>
                           </>
                         )}
-                      </div>
-                    )}
-                  </>
+                  </div>
                 }
               </div>
             </div>
