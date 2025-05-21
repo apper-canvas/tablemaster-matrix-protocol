@@ -1360,8 +1360,7 @@ const Tables = () => {
         {activeTab === 'waitlist' && (
           <WaitlistManagement />
         )}
-          </div>
-        )}
+        
         
         {/* Analytics Tab - Placeholder for future implementation */}
         {activeTab === 'analytics' && (
