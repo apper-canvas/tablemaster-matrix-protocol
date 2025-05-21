@@ -16,8 +16,8 @@ const Header = ({ darkMode, toggleDarkMode }) => {
   const SunIcon = getIcon('sun');
   const RestaurantIcon = getIcon('utensils');
   
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-          <Route path="/tables" element={<Tables />} />
+  const [isMenuOpen, setIsMenuOpen] = useState(false);  
+  
   
   return (
     <header className="sticky top-0 z-40 w-full bg-white dark:bg-surface-800 shadow-sm border-b border-surface-200 dark:border-surface-700">
@@ -38,7 +38,7 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               <Link to="#orders" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Orders
               </Link>
-              <Link to="#tables" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+              <Link to="/tables" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Tables
               </Link>
               <Link to="/inventory" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
@@ -82,7 +82,7 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               <Link to="#orders" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Orders
               </Link>
-              <Link to="#tables" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+              <Link to="/tables" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Tables
               </Link>
               <Link to="/inventory" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
@@ -168,6 +168,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
             <Route path="/menu" element={<MenuBuilder />} />
             <Route path="/inventory" element={<Inventory />} />
+            <Route path="/tables" element={<Tables />} />
           </Routes>
         </motion.div>
       </main>

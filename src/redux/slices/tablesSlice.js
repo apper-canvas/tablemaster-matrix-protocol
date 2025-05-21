@@ -94,6 +94,46 @@ const initialState = {
     { id: 'private', name: 'Private Dining', color: '#fef3c7' },
     { id: 'bar', name: 'Bar Area', color: '#f1f5f9' },
     { id: 'outdoor', name: 'Outdoor Patio', color: '#d1fae5' }
+  ],
+  reservations: [
+    {
+      id: 'res-1',
+      tableId: 'table-3',
+      customerName: 'Johnson Party',
+      phoneNumber: '555-123-4567',
+      partySize: 6,
+      reservationTime: '2023-07-25T20:00:00',
+      duration: 90,
+      status: 'confirmed',
+      notes: 'Birthday celebration',
+      createdAt: '2023-07-20T15:30:00'
+    },
+    {
+      id: 'res-2',
+      tableId: 'table-5',
+      customerName: 'Garcia Family',
+      phoneNumber: '555-987-6543',
+      partySize: 4,
+      reservationTime: '2023-07-26T18:30:00',
+      duration: 60,
+      status: 'confirmed',
+      notes: '',
+      createdAt: '2023-07-21T09:15:00'
+    },
+    {
+      id: 'res-3',
+      tableId: 'table-1',
+      customerName: 'Thompson Couple',
+      phoneNumber: '555-222-3333',
+      partySize: 2,
+      reservationTime: '2023-07-25T19:00:00',
+      duration: 60,
+      status: 'cancelled',
+      notes: 'Window seat preferred',
+      createdAt: '2023-07-20T11:45:00',
+      cancelledAt: '2023-07-22T14:20:00',
+      cancellationReason: 'Customer request'
+    }
   ]
 };
 
@@ -152,10 +192,76 @@ const tablesSlice = createSlice({
           if (phoneNumber) state.tables[index].phoneNumber = phoneNumber;
         }
       }
+    },
+    addReservation: (state, action) => {
+      const newReservation = {
+        id: uuidv4(),
+        status: 'confirmed',
+        createdAt: new Date().toISOString(),
+        ...action.payload
+      };
+      
+      state.reservations.push(newReservation);
+      
+      // Update the table status to reserved if the reservation is for today/near future
+      const reservationTime = new Date(newReservation.reservationTime);
+      const now = new Date();
+      const timeDiff = reservationTime - now;
+      
+      // If reservation is within the next 24 hours, mark table as reserved
+      if (timeDiff > 0 && timeDiff < 24 * 60 * 60 * 1000) {
+        const tableIndex = state.tables.findIndex(table => table.id === newReservation.tableId);
+        if (tableIndex !== -1 && state.tables[tableIndex].status === 'available') {
+          state.tables[tableIndex].status = 'reserved';
+          state.tables[tableIndex].customerName = newReservation.customerName;
+          state.tables[tableIndex].phoneNumber = newReservation.phoneNumber;
+          state.tables[tableIndex].reservationTime = newReservation.reservationTime;
+        }
+      }
+    },
+    updateReservation: (state, action) => {
+      const { id, ...changes } = action.payload;
+      const index = state.reservations.findIndex(reservation => reservation.id === id);
+      
+      if (index !== -1) {
+        // Update the reservation
+        state.reservations[index] = { 
+          ...state.reservations[index], 
+          ...changes,
+          updatedAt: new Date().toISOString()
+        };
+        
+        // If table changed or time changed, update table statuses accordingly
+        const reservation = state.reservations[index];
+        const tableIndex = state.tables.findIndex(table => table.id === reservation.tableId);
+        
+        if (tableIndex !== -1 && state.tables[tableIndex].status === 'reserved') {
+          // Update the table's reservation info
+          state.tables[tableIndex].customerName = reservation.customerName;
+          state.tables[tableIndex].phoneNumber = reservation.phoneNumber;
+          state.tables[tableIndex].reservationTime = reservation.reservationTime;
+        }
+      }
+    },
+    cancelReservation: (state, action) => {
+      const { id, reason } = action.payload;
+      const index = state.reservations.findIndex(reservation => reservation.id === id);
+      
+      if (index !== -1) {
+        // Mark the reservation as cancelled
+        state.reservations[index].status = 'cancelled';
+        state.reservations[index].cancelledAt = new Date().toISOString();
+        state.reservations[index].cancellationReason = reason || 'No reason provided';
+        
+        // Update the table status if it was reserved for this reservation
+        const tableId = state.reservations[index].tableId;
+        const tableIndex = state.tables.findIndex(table => table.id === tableId && table.status === 'reserved');
+        if (tableIndex !== -1) {
+          state.tables[tableIndex].status = 'available';
+        }
+      }
     }
   }
 });
-
-export const { addTable, updateTable, deleteTable, moveTable, setTableStatus } = tablesSlice.actions;
-
+export const { addTable, updateTable, deleteTable, moveTable, setTableStatus, addReservation, updateReservation, cancelReservation } = tablesSlice.actions;
 export default tablesSlice.reducer;

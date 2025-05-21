@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { toast } from 'react-toastify';
+import { format, parseISO, addDays, isBefore, isAfter, formatDistanceToNow } from 'date-fns';
 import { getIcon } from '../utils/iconUtils';
 import TableFloorPlan from '../components/TableFloorPlan';
-import { updateTable, setTableStatus, addTable, deleteTable } from '../redux/slices/tablesSlice';
+import {
+  updateTable, setTableStatus, addTable, deleteTable, addReservation, updateReservation, cancelReservation
+} from '../redux/slices/tablesSlice';
 
 const Tables = () => {
   const dispatch = useDispatch();
@@ -14,6 +17,7 @@ const Tables = () => {
   const sections = useSelector((state) => state.tables.sections);
   
   const [selectedTable, setSelectedTable] = useState(null);
+  const [selectedReservation, setSelectedReservation] = useState(null);
   const [activeTab, setActiveTab] = useState('floorplan');
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddingTable, setIsAddingTable] = useState(false);
@@ -35,10 +39,16 @@ const Tables = () => {
     partySize: '',
     reservationTime: '',
     estimatedDuration: 60,
+    notes: '',
     server: '',
-    notes: ''
   });
 
+  // Reservation state
+  const reservations = useSelector((state) => state.tables.reservations);
+  const [isAddingReservation, setIsAddingReservation] = useState(false);
+  const [isEditingReservation, setIsEditingReservation] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [reservationFilter, setReservationFilter] = useState('upcoming');
   // Icons
   const EditIcon = getIcon('edit');
   const SaveIcon = getIcon('save');
@@ -52,11 +62,15 @@ const Tables = () => {
   const XIcon = getIcon('x');
   const PhoneIcon = getIcon('phone');
   const UserIcon = getIcon('user');
+  const CalendarIcon = getIcon('calendar');
+  const SearchIcon = getIcon('search');
+  const FilterIcon = getIcon('filter');
+  const AlertCircleIcon = getIcon('alert-circle');
 
   // Handle selecting a table
   const handleSelectTable = (table) => {
     setSelectedTable(table);
-    setTableAction(null);
+    setTableAction(null);  
     
     // Pre-fill form data based on table status
     if (table.status === 'occupied') {
@@ -89,6 +103,57 @@ const Tables = () => {
         notes: ''
       });
     }
+  };
+
+  const handleAddNewReservation = () => {
+    // Reset the form data and show the form
+    setSelectedReservation(null);
+    // Find the first available table as default
+    const availableTable = tables.find(table => table.status === 'available');
+    
+    setActionForm({
+      customerName: '',
+      phoneNumber: '',
+      partySize: availableTable ? availableTable.capacity : 2,
+      reservationTime: new Date(new Date().getTime() + 60 * 60 * 1000).toISOString().slice(0, 16), // 1 hour from now
+      estimatedDuration: 60,
+      notes: '',
+      tableId: availableTable ? availableTable.id : ''
+    });
+    
+    setIsAddingReservation(true);
+  };
+
+  const handleEditReservation = (reservation) => {
+    setSelectedReservation(reservation);
+    setActionForm({
+      customerName: reservation.customerName,
+      phoneNumber: reservation.phoneNumber || '',
+      partySize: reservation.partySize,
+      reservationTime: new Date(reservation.reservationTime).toISOString().slice(0, 16),
+      estimatedDuration: reservation.duration || 60,
+      notes: reservation.notes || '',
+      tableId: reservation.tableId
+    });
+    setIsEditingReservation(true);
+  };
+
+  const handleCancelReservation = (reservation) => {
+    setSelectedReservation(reservation);
+    setShowCancelDialog(true);
+  };
+
+  const confirmCancelReservation = (reason = '') => {
+    if (!selectedReservation) return;
+    
+    dispatch(cancelReservation({
+      id: selectedReservation.id,
+      reason
+    }));
+    
+    toast.success(`Reservation for ${selectedReservation.customerName} has been cancelled`);
+    setShowCancelDialog(false);
+    setSelectedReservation(null);
   };
 
   // Handle table action selection
@@ -229,6 +294,65 @@ const Tables = () => {
     // Reset action after submission
     setTableAction(null);
   };
+  
+  // Handle reservation form submission
+  const handleReservationSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validate the form
+    if (!actionForm.customerName) {
+      toast.error('Customer name is required');
+      return;
+    }
+    
+    if (!actionForm.reservationTime) {
+      toast.error('Reservation time is required');
+      return;
+    }
+    
+    if (!actionForm.tableId) {
+      toast.error('Please select a table');
+      return;
+    }
+    
+    const reservationData = {
+      tableId: actionForm.tableId,
+      customerName: actionForm.customerName,
+      phoneNumber: actionForm.phoneNumber,
+      partySize: parseInt(actionForm.partySize, 10) || 2,
+      reservationTime: actionForm.reservationTime,
+      duration: parseInt(actionForm.estimatedDuration, 10) || 60,
+      notes: actionForm.notes
+    };
+    
+    if (isEditingReservation && selectedReservation) {
+      // Update existing reservation
+      dispatch(updateReservation({
+        id: selectedReservation.id,
+        ...reservationData
+      }));
+      
+      toast.success(`Reservation for ${actionForm.customerName} has been updated`);
+      setIsEditingReservation(false);
+    } else {
+      // Create new reservation
+      dispatch(addReservation(reservationData));
+      toast.success(`Reservation for ${actionForm.customerName} has been created`);
+      setIsAddingReservation(false);
+    }
+    
+    // If the table was selected on the floor plan, update it to show selection
+    if (selectedTable && selectedTable.id === actionForm.tableId) {
+      // Update the selected table to show the reservation info
+      const table = tables.find(t => t.id === actionForm.tableId);
+      if (table) {
+        handleSelectTable(table);
+      }
+    }
+    
+    setSelectedReservation(null);
+  };
+
 
   // Get available actions based on table status
   const getAvailableActions = (table) => {
@@ -428,6 +552,175 @@ const Tables = () => {
     }
   };
 
+  // Filter reservations based on the selected filter
+  const filteredReservations = useMemo(() => {
+    const now = new Date();
+    
+    switch (reservationFilter) {
+      case 'today':
+        return reservations.filter(res => {
+          const resDate = new Date(res.reservationTime);
+          return resDate.toDateString() === now.toDateString() && res.status === 'confirmed';
+        });
+      case 'upcoming':
+        return reservations.filter(res => {
+          const resDate = new Date(res.reservationTime);
+          return isAfter(resDate, now) && res.status === 'confirmed';
+        });
+      case 'past':
+        return reservations.filter(res => {
+          const resDate = new Date(res.reservationTime);
+          return isBefore(resDate, now) && res.status === 'confirmed';
+        });
+      case 'cancelled':
+        return reservations.filter(res => res.status === 'cancelled');
+      default:
+        return reservations;
+    }
+  }, [reservations, reservationFilter]);
+
+  // Reservation Management Component
+  const ReservationManagement = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    // Filter reservations by search term
+    const searchedReservations = filteredReservations.filter(res =>
+      res.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      res.phoneNumber.includes(searchTerm)
+    );
+    
+    return (
+      <div className="card p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold">Reservations</h3>
+          <button
+            onClick={handleAddNewReservation}
+            className="btn btn-primary"
+          >
+            <PlusIcon className="w-4 h-4 mr-2" /> New Reservation
+          </button>
+        </div>
+        
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-grow">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <SearchIcon className="h-5 w-5 text-surface-400" />
+            </div>
+            <input
+              type="text"
+              className="input pl-10"
+              placeholder="Search by name or phone"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <FilterIcon className="h-5 w-5 text-surface-500" />
+            <select
+              value={reservationFilter}
+              onChange={(e) => setReservationFilter(e.target.value)}
+              className="select"
+            >
+              <option value="upcoming">Upcoming</option>
+              <option value="today">Today</option>
+              <option value="past">Past</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+        </div>
+        
+        {searchedReservations.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-surface-200 dark:divide-surface-700">
+              <thead>
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Customer</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Table</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Date & Time</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Party Size</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-200 dark:divide-surface-700">
+                {searchedReservations.map(reservation => {
+                  const table = tables.find(t => t.id === reservation.tableId);
+                  return (
+                    <tr key={reservation.id} className="hover:bg-surface-100 dark:hover:bg-surface-700/50">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="font-medium">{reservation.customerName}</div>
+                        <div className="text-sm text-surface-500">{reservation.phoneNumber}</div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {table ? (
+                          <div className="flex items-center">
+                            <div className={`w-2 h-2 rounded-full ${
+                              table.status === 'available' ? 'bg-green-500' :
+                              table.status === 'occupied' ? 'bg-red-500' :
+                              table.status === 'reserved' ? 'bg-blue-500' :
+                              'bg-yellow-500'
+                            } mr-2`}></div>
+                            <span>Table {table.number}</span>
+                          </div>
+                        ) : (
+                          <span className="text-surface-500">Unknown</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div>{format(parseISO(reservation.reservationTime), 'MMM d, yyyy')}</div>
+                        <div className="text-sm text-surface-500">
+                          {format(parseISO(reservation.reservationTime), 'h:mm a')}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-center">
+                        {reservation.partySize}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          reservation.status === 'confirmed' 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400'
+                            : 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400'
+                        }`}>
+                          {reservation.status === 'confirmed' ? 'Confirmed' : 'Cancelled'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-right">
+                        <div className="flex items-center space-x-2">
+                          {reservation.status === 'confirmed' && (
+                            <>
+                              <button
+                                onClick={() => handleEditReservation(reservation)}
+                                className="p-1 rounded-md hover:bg-surface-200 dark:hover:bg-surface-700"
+                                title="Edit"
+                              >
+                                <EditIcon className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleCancelReservation(reservation)}
+                                className="p-1 rounded-md hover:bg-surface-200 dark:hover:bg-surface-700 text-red-500"
+                                title="Cancel"
+                              >
+                                <XIcon className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-surface-500">No reservations found</div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="app-container py-6 md:py-8">
@@ -499,6 +792,12 @@ const Tables = () => {
           </button>
         </div>
         
+        {/* Main Content Area - Shows different content based on the active tab */}
+        
+        {/* Floor Plan Tab */}
+        {activeTab === 'floorplan' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Floor Plan */}
         {activeTab === 'floorplan' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Floor Plan */}
@@ -748,6 +1047,199 @@ const Tables = () => {
                   <p>Select a table to view details and take actions</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+        
+        {/* Reservations Tab */}
+        {activeTab === 'reservations' && (
+          <ReservationManagement />
+        )}
+        
+        {/* Waitlist Tab - Placeholder for future implementation */}
+        {activeTab === 'waitlist' && (
+          <div className="card p-6">
+            <h3 className="text-lg font-semibold mb-4">Waitlist</h3>
+            <p className="text-center py-8 text-surface-500">Waitlist functionality coming soon</p>
+          </div>
+        )}
+        
+        {/* Analytics Tab - Placeholder for future implementation */}
+        {activeTab === 'analytics' && (
+          <div className="card p-6">
+            <h3 className="text-lg font-semibold mb-4">Table Analytics</h3>
+            <p className="text-center py-8 text-surface-500">Analytics functionality coming soon</p>
+          </div>
+        )}
+        
+        {/* Add/Edit Reservation Modal */}
+        {(isAddingReservation || isEditingReservation) && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+            <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">
+                {isEditingReservation ? 'Edit Reservation' : 'New Reservation'}
+              </h3>
+              
+              <form onSubmit={handleReservationSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="customerName" className="label">Customer Name *</label>
+                    <input
+                      type="text"
+                      id="customerName"
+                      name="customerName"
+                      value={actionForm.customerName}
+                      onChange={handleActionFormChange}
+                      className="input"
+                      placeholder="Enter customer name"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="phoneNumber" className="label">Phone Number</label>
+                    <input
+                      type="tel"
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      value={actionForm.phoneNumber}
+                      onChange={handleActionFormChange}
+                      className="input"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="tableId" className="label">Table *</label>
+                    <select
+                      id="tableId"
+                      name="tableId"
+                      value={actionForm.tableId}
+                      onChange={handleActionFormChange}
+                      className="select"
+                      required
+                    >
+                      <option value="">Select a table</option>
+                      {tables.map(table => (
+                        <option key={table.id} value={table.id} disabled={table.status === 'occupied'}>
+                          Table {table.number} ({table.capacity} seats) - {table.status === 'occupied' ? 'Occupied' : table.status === 'reserved' ? 'Reserved' : 'Available'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="partySize" className="label">Party Size *</label>
+                    <input
+                      type="number"
+                      id="partySize"
+                      name="partySize"
+                      value={actionForm.partySize}
+                      onChange={handleActionFormChange}
+                      className="input"
+                      min="1"
+                      required
+                    />
+                    {actionForm.tableId && (
+                      <p className="text-xs text-surface-500 mt-1">
+                        Table capacity: {tables.find(t => t.id === actionForm.tableId)?.capacity || 'Unknown'}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="reservationTime" className="label">Reservation Time *</label>
+                    <input
+                      type="datetime-local"
+                      id="reservationTime"
+                      name="reservationTime"
+                      value={actionForm.reservationTime}
+                      onChange={handleActionFormChange}
+                      className="input"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="estimatedDuration" className="label">Duration</label>
+                    <select
+                      id="estimatedDuration"
+                      name="estimatedDuration"
+                      value={actionForm.estimatedDuration}
+                      onChange={handleActionFormChange}
+                      className="select"
+                    >
+                      <option value="30">30 minutes</option>
+                      <option value="45">45 minutes</option>
+                      <option value="60">60 minutes</option>
+                      <option value="90">90 minutes</option>
+                      <option value="120">120 minutes</option>
+                      <option value="180">180 minutes</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="notes" className="label">Notes</label>
+                    <textarea
+                      id="notes"
+                      name="notes"
+                      value={actionForm.notes}
+                      onChange={handleActionFormChange}
+                      className="textarea"
+                      placeholder="Add any special requests or notes"
+                      rows="3"
+                    ></textarea>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-2 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingReservation(false);
+                      setIsEditingReservation(false);
+                    }}
+                    className="btn btn-outline"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                  >
+                    {isEditingReservation ? 'Update Reservation' : 'Create Reservation'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        
+        {/* Cancel Reservation Confirmation Dialog */}
+        {showCancelDialog && selectedReservation && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+            <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md">
+              <div className="flex items-center mb-4 text-red-500">
+                <AlertCircleIcon className="w-6 h-6 mr-2" />
+                <h3 className="text-lg font-semibold">Cancel Reservation</h3>
+              </div>
+              
+              <p className="mb-4">Are you sure you want to cancel the reservation for <strong>{selectedReservation.customerName}</strong>?</p>
+              
+              <div className="flex justify-end space-x-2 mt-6">
+                <button
+                  onClick={() => setShowCancelDialog(false)}
+                  className="btn btn-outline"
+                >
+                  Keep Reservation
+                </button>
+                <button
+                  onClick={() => confirmCancelReservation('Cancelled by staff')}
+                  className="btn bg-red-500 hover:bg-red-600 text-white"
+                >
+                  Cancel Reservation
+                </button>
+              </div>
             </div>
           </div>
         )}
