@@ -186,6 +186,87 @@ const IngredientForm = ({ ingredient, onSubmit, onCancel }) => {
         </div>
       </div>
     </form>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label htmlFor="vendor" className="label">Vendor</label>
+        <input
+          id="vendor"
+          name="vendor"
+          value={formData.vendor}
+          onChange={handleChange}
+          type="text"
+          className="input"
+          placeholder="Supplier name"
+        />
+      </div>
+      
+      <div>
+        <label htmlFor="vendorContact" className="label">Vendor Contact</label>
+        <input
+          id="vendorContact"
+          name="vendorContact"
+          value={formData.vendorContact}
+          onChange={handleChange}
+          type="text"
+          className="input"
+          placeholder="Phone or email"
+        />
+      </div>
+    </div>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label htmlFor="expirationDate" className="label">Expiration Date</label>
+        <input
+          id="expirationDate"
+          name="expirationDate"
+          value={formData.expirationDate}
+          onChange={handleChange}
+          type="date"
+          className="input"
+        />
+      </div>
+      
+      <div>
+        <label htmlFor="location" className="label">Storage Location</label>
+        <input
+          id="location"
+          name="location"
+          value={formData.location}
+          onChange={handleChange}
+          type="text"
+          className="input"
+          placeholder="e.g., Shelf A3, Refrigerator 2"
+        />
+      </div>
+    </div>
+    
+    <div>
+      <label htmlFor="notes" className="label">Notes</label>
+      <textarea
+        id="notes"
+        name="notes"
+        value={formData.notes}
+        onChange={handleChange}
+        rows="3"
+        className="input"
+        placeholder="Additional information about this ingredient"
+      ></textarea>
+    </div>
+    
+    <div className="flex justify-end space-x-2 pt-2">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="btn btn-outline"
+      >
+        Cancel
+      </button>
+      <button type="submit" className="btn btn-primary">
+        {ingredient ? 'Update Ingredient' : 'Add Ingredient'}
+      </button>
+    </div>
   );
 };
 
