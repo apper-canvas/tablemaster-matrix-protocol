@@ -798,9 +798,6 @@ const Tables = () => {
         {activeTab === 'floorplan' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Floor Plan */}
-        {activeTab === 'floorplan' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Floor Plan */}
             <div className="md:col-span-2 card p-6">
               <TableFloorPlan 
                 tables={tables} 
@@ -1050,7 +1047,7 @@ const Tables = () => {
             </div>
           </div>
         )}
-        
+
         {/* Reservations Tab */}
         {activeTab === 'reservations' && (
           <ReservationManagement />
