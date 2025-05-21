@@ -6,6 +6,7 @@ import { getIcon } from './utils/iconUtils';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import MenuBuilder from './pages/MenuBuilder';
+import Inventory from './pages/Inventory';
 
 // Header component with dark mode toggle
 const Header = ({ darkMode, toggleDarkMode }) => {
@@ -38,7 +39,7 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               <a href="#tables" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Tables
               </a>
-              <a href="#inventory" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+              <a href="/inventory" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Inventory
               </a>
               <a href="/menu" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
@@ -82,7 +83,7 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               <a href="#tables" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Tables
               </a>
-              <a href="#inventory" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+              <a href="/inventory" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Inventory
               </a>
               <a href="/menu" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
@@ -164,6 +165,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="*" element={<NotFound />} />
             <Route path="/menu" element={<MenuBuilder />} />
+            <Route path="/inventory" element={<Inventory />} />
           </Routes>
         </motion.div>
       </main>

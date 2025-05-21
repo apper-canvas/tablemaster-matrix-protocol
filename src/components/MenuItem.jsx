@@ -1,5 +1,6 @@
 import { Draggable } from 'react-beautiful-dnd';
 import { getIcon } from '../utils/iconUtils';
+import { useSelector } from 'react-redux';
 
 const MenuItem = ({ item, index, onEdit, onDelete }) => {
   // Icons
@@ -12,6 +13,7 @@ const MenuItem = ({ item, index, onEdit, onDelete }) => {
   const LeafIcon = getIcon('leaf');
   const TrendingUpIcon = getIcon('trending-up');
   const ShoppingBasketIcon = getIcon('shopping-basket');
+  const LayersIcon = getIcon('layers');
 
   // Format price
   const formatPrice = (price) => {
@@ -20,6 +22,16 @@ const MenuItem = ({ item, index, onEdit, onDelete }) => {
       currency: 'USD'
     }).format(price);
   };
+
+  // Get ingredient information from Redux store
+  const ingredients = useSelector(state => 
+    state.inventory?.ingredients?.byId || {}
+  );
+  
+  // Get ingredient names for this menu item
+  const itemIngredients = item.ingredients?.map(ingId => 
+    ingredients[ingId]?.name || 'Unknown ingredient'
+  ) || [];
 
   return (
     <Draggable draggableId={item.id} index={index}>
@@ -74,6 +86,14 @@ const MenuItem = ({ item, index, onEdit, onDelete }) => {
                   <ShoppingBasketIcon className="w-3 h-3 mr-1" />
                   <span>Cost: {formatPrice(item.cost)}</span>
                 </div>
+                {itemIngredients.length > 0 && (
+                  <div className="inline-flex items-center text-xs px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 rounded">
+                    <LayersIcon className="w-3 h-3 mr-1" />
+                    <span>
+                      Ingredients: {itemIngredients.join(', ')}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             
