@@ -1194,11 +1194,10 @@ const Tables = () => {
                     </div>
                   </div>
                   <div>
-                  {selectedTable && (
-                    <>
-                      {isEditMode ? (
-                        <div className="mt-4">
-                          <div>
+                    {selectedTable && (
+                      <>
+                        {isEditMode ? (
+                          <div className="mt-4">
                             <h4 className="font-medium mb-3">Edit Table</h4>
                             <div className="space-y-3">
                               <div>
@@ -1293,24 +1292,22 @@ const Tables = () => {
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ) : tableAction ? (
-                        <div>
-                          <h4 className="font-medium mb-3">
+                          </div>
+                        ) : tableAction ? (
+                          <div>
+                            <h4 className="font-medium mb-3">
                             {tableAction === 'seat' ? 'Seat Guests' :
                              tableAction === 'reserve' ? 'Make Reservation' :
                              tableAction === 'clear' ? 'Clear Table' :
                              tableAction === 'finish-cleaning' ? 'Finish Cleaning' : 'Action'}
-                          </h4>
-                            tableAction === 'finish-cleaning' ? 'Finish Cleaning' : 'Action'}
-                          </h4>
-                          <div className="flex justify-end space-x-2 mt-4">
-                          <form onSubmit={handleActionSubmit}>
-                            {getFormContent()}
+                            </h4>
                             
-                            <div className="flex justify-end space-x-2 mt-4">
-                              <button
-                                type="button"
+                            <form onSubmit={handleActionSubmit}>
+                              {getFormContent()}
+                              
+                              <div className="flex justify-end space-x-2 mt-4">
+                                <button
+                                  type="button"
                                 onClick={() => setTableAction(null)}
                                 className="btn btn-outline"
                               >
@@ -1328,29 +1325,28 @@ const Tables = () => {
                               </button>
                             </div>
                           </form>
-                        </div>
-                      ) : (
-                        <div>
-                          <h4 className="font-medium mb-3">Actions</h4>
-                          <div className="space-y-2">
-                            {getAvailableActions(selectedTable).map(action => (
-                              <button
-                                key={action.id}
-                                onClick={() => handleTableAction(action.id)}
-                                className="btn btn-outline w-full flex items-center justify-center"
-                              >
-                                {getIcon(action.icon)({ className: "w-4 h-4 mr-2" })}
-                                {action.label}
-                              </button>
-                            ))}
                           </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </>
+                        ) : (
+                          <div>
+                            <h4 className="font-medium mb-3">Actions</h4>
+                            <div className="space-y-2">
+                              {getAvailableActions(selectedTable).map(action => (
+                                <button
+                                  key={action.id}
+                                  onClick={() => handleTableAction(action.id)}
+                                  className="btn btn-outline w-full flex items-center justify-center"
+                                >
+                                  {getIcon(action.icon)({ className: "w-4 h-4 mr-2" })}
+                                  {action.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
-                </>
+                </div>
               ) : (
                 <div className="card p-6">
                   <div className="text-center py-8 text-surface-500 dark:text-surface-400">
@@ -1359,12 +1355,10 @@ const Tables = () => {
                 </div>
               )}
             </div>
-          </div>
         )}
-            </div>
-          )}
-  
-          {/* Reservations Tab */}
+
+        {/* Reservations Tab */}
+        {activeTab === 'reservations' && (
           {activeTab === 'reservations' && (
             <ReservationManagement />
           )}
