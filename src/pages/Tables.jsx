@@ -1124,7 +1124,8 @@ const Tables = () => {
                     <div className="bg-surface-100 dark:bg-surface-700 p-4 rounded-lg mb-4">
                       <div className="flex justify-between mb-3">
                         <div className="flex items-center">
-                          <div className={`w-3 h-3 rounded-full ${
+                          <div 
+                            className={`w-3 h-3 rounded-full ${
                             selectedTable.status === 'available' ? 'bg-green-500' :
                             selectedTable.status === 'occupied' ? 'bg-red-500' :
                             selectedTable.status === 'reserved' ? 'bg-blue-500' :
@@ -1190,9 +1191,10 @@ const Tables = () => {
                         )}
                       </>
                     )}
-                  </div>
-                  
-                    <div>
+                    </div>
+
+                  {selectedTable && (
+                    <div className="mt-4">
                       <h4 className="font-medium mb-3">Edit Table</h4>
                       <div className="space-y-3">
                         <div>
@@ -1288,9 +1290,11 @@ const Tables = () => {
                       </div>
                     </div>
                   ) : (
-                    <div>
-                      {/* Table actions */}
+                    <div className="mt-4">
                       {!tableAction ? (
+                        <>
+                      {/* Table actions */}
+                      
                         <div>
                           <h4 className="font-medium mb-3">Actions</h4>
                           <div className="space-y-2">
@@ -1306,7 +1310,9 @@ const Tables = () => {
                             ))}
                           </div>
                         </div>
+                        </>
                       ) : (
+                        <>
                         <div>
                           <h4 className="font-medium mb-3">
                             {tableAction === 'seat' ? 'Seat Guests' :
@@ -1338,9 +1344,10 @@ const Tables = () => {
                               </button>
                             </div>
                           </form>
-                        </div>
+                        </>
                       )}
                     </div>
+                  )}
                   )}
                 </div>
               ) : (
