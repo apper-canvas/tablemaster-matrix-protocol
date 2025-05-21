@@ -322,7 +322,6 @@ const WasteLogForm = ({ ingredient, onSubmit, onCancel }) => {
     
     // Validation
     if (formData.quantity <= 0) {
-    if (!formData.quantity || formData.quantity <= 0) {
       toast.error('Please enter a valid quantity greater than zero');
     }
     
@@ -466,6 +465,7 @@ const WasteLogForm = ({ ingredient, onSubmit, onCancel }) => {
 const Inventory = () => {
   const dispatch = useDispatch();
   const ingredients = useSelector(state => state.inventory.ingredients);
+  const allIngredients = Object.values(ingredients.byId);
   const waste = useSelector(state => state.inventory.waste);
   const purchaseOrders = useSelector(state => state.inventory.purchaseOrders);
   
@@ -476,12 +476,18 @@ const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sort, setSort] = useState('name');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [poSearchTerm, setPoSearchTerm] = useState('');
+  const [poStatusFilter, setPoStatusFilter] = useState('all');
+  const [poVendorFilter, setPoVendorFilter] = useState('all');
   const [filterStock, setFilterStock] = useState('all');
   
   const [isAddingIngredient, setIsAddingIngredient] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState(null);
   const [selectedIngredient, setSelectedIngredient] = useState(null);
   const [actionMode, setActionMode] = useState(null); // 'add-stock', 'log-waste', etc.
+  const [isCreatingPO, setIsCreatingPO] = useState(false);
+  const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState(null);
+  const [newPOItems, setNewPOItems] = useState([]);
   
   // Icons
   const PlusIcon = getIcon('plus');
@@ -500,6 +506,8 @@ const Inventory = () => {
   const XIcon = getIcon('x');
   const EyeIcon = getIcon('eye');
   const DollarSignIcon = getIcon('dollar-sign');
+  const CheckIcon = getIcon('check');
+  const TruckIcon = getIcon('truck');
   const FileBarChartIcon = getIcon('file-bar-chart');
   
   // Filter and sort ingredients
@@ -543,7 +551,19 @@ const Inventory = () => {
     .map(ing => ing.category)
     .filter((value, index, self) => self.indexOf(value) === index)
     .sort();
-    
+  
+  // Get unique vendors for PO filter
+  const vendors = [...new Set(
+    [...Object.values(ingredients.byId).map(ing => ing.vendor), 
+     ...purchaseOrders.map(po => po.vendor)]
+  )].filter(Boolean).sort();
+  
+  // Filter purchase orders
+  const filteredPOs = purchaseOrders
+    .filter(po => po.vendor.toLowerCase().includes(poSearchTerm.toLowerCase()) || po.id.includes(poSearchTerm))
+    .filter(po => poStatusFilter === 'all' || po.status === poStatusFilter)
+    .filter(po => poVendorFilter === 'all' || po.vendor === poVendorFilter);
+  
   // Filter and prepare waste logs for display
   const filteredWaste = waste
     .filter(entry => {
@@ -593,6 +613,54 @@ const Inventory = () => {
         return acc;
       }, {})).sort((a, b) => b[1] - a[1])[0] : null
   };
+
+  // Handle creating a new purchase order
+  const handleCreatePO = () => {
+    setIsCreatingPO(true);
+    setNewPOItems([]);
+  };
+
+  // Add item to new purchase order
+  const handleAddItemToPO = (event) => {
+    const ingredientId = event.target.value;
+    if (!ingredientId) return;
+
+    const ingredient = ingredients.byId[ingredientId];
+    if (!ingredient) return;
+
+    // Check if already in list
+    if (newPOItems.some(item => item.ingredientId === ingredientId)) {
+      toast.info(`${ingredient.name} is already in your order`);
+      return;
+    }
+
+    const orderQuantity = Math.max(1, Math.ceil(ingredient.parLevel - ingredient.currentStock));
+    
+    setNewPOItems(prev => [...prev, {
+      ingredientId: ingredient.id,
+      name: ingredient.name,
+      quantity: orderQuantity,
+      unitType: ingredient.unitType,
+      unitPrice: ingredient.cost,
+      totalPrice: orderQuantity * ingredient.cost
+    }]);
+  };
+
+  // Update item quantity in new PO
+  const handleUpdatePOItemQuantity = (index, quantity) => {
+    setNewPOItems(prev => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        quantity: quantity,
+        totalPrice: quantity * updated[index].unitPrice
+      };
+      return updated;
+    });
+  };
+
+  // Remove item from new PO
+  const handleRemovePOItem = (index) => setNewPOItems(prev => prev.filter((_, i) => i !== index));
   
   // Handle adding a new ingredient
   const handleAddIngredient = (formData) => {
@@ -662,6 +730,12 @@ const Inventory = () => {
   };
   
   // Handle generating purchase orders
+  const handleSubmitPurchaseOrder = (vendor, items, notes) => {
+    dispatch(generatePurchaseOrder({ vendor, items, notes }));
+    setIsCreatingPO(false);
+    toast.success(`Purchase order created successfully`);
+  };
+  
   const handleGeneratePurchaseOrder = () => {
     // Find ingredients below par level
     const lowItems = Object.values(ingredients.byId)
@@ -700,6 +774,27 @@ const Inventory = () => {
     });
     
     toast.success(`Generated ${Object.keys(vendorGroups).length} purchase orders`);
+  };
+
+  // Handle receiving a purchase order
+  const handleReceivePO = (po) => {
+    if (po.status === 'received') {
+      toast.info('This order has already been received');
+      return;
+    }
+
+    if (!window.confirm(`Mark this purchase order as received? This will add the items to your inventory.`)) {
+      return;
+    }
+
+    // Update each item's stock
+    po.items.forEach(item => {
+      dispatch(addStock({
+        ingredientId: item.ingredientId,
+        quantity: item.quantity,
+        date: new Date().toISOString().split('T')[0]
+      }));
+    });
   };
   
   return (
@@ -1091,6 +1186,7 @@ const Inventory = () => {
             <motion.div
               key="waste-tab"
               initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
             >
               {/* Waste Log Actions */}
               <div className="mb-4 flex flex-col md:flex-row gap-3 justify-between">
@@ -1194,9 +1290,6 @@ const Inventory = () => {
                   </div>
                 </div>
               </div>
-              
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
               <div className="card overflow-hidden">
@@ -1206,7 +1299,7 @@ const Inventory = () => {
                       <tr>
                         <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Date</th>
                         <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Ingredient</th>
-                        <th className="px-4 py-3 text-right text-surface-600 dark:text-surface-300 font-medium">Actions</th>
+                        <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Actions</th>
                         <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Quantity</th>
                         <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Reason</th>
                         <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Cost Impact</th>
@@ -1214,17 +1307,15 @@ const Inventory = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-surface-200 dark:divide-surface-700">
-                      {waste.length === 0 ? (
+                      {filteredWaste.length === 0 ? (
                         <tr>
-                          <td colSpan="6" className="px-4 py-6 text-center text-surface-500 dark:text-surface-400">
-                        filteredWaste.length === 0 ? (
-                         <tr>
-                           <td colSpan="7" className="px-4 py-6 text-center text-surface-500 dark:text-surface-400">
-                             No waste logs match your search criteria.
-                           </td>
-                         </tr>
-                        ) : filteredWaste.map(wasteEntry => (
+                          <td colSpan="7" className="px-4 py-6 text-center text-surface-500 dark:text-surface-400">
+                            No waste logs match your search criteria.
                           </td>
+                        </tr>
+                      ) : (
+                        filteredWaste.map(wasteEntry => (
+                          <tr key={wasteEntry.id}>
                             <td className="px-4 py-3">
                               {new Date(wasteEntry.date).toLocaleDateString('en-US', { 
                                 year: 'numeric', 
@@ -1232,16 +1323,8 @@ const Inventory = () => {
                                 day: 'numeric' 
                               })}
                             </td>
-                      ) : (
-                        waste.map(wasteEntry => (
-                              {wasteEntry.quantity} {wasteEntry.unitType || ingredients.byId[wasteEntry.ingredientId]?.unitType || 'units'}
-                            <td className="px-4 py-3">{wasteEntry.date}</td>
                             <td className="px-4 py-3">{wasteEntry.ingredientName}</td>
                             <td className="px-4 py-3">
-                              {wasteEntry.quantity} {ingredients.byId[wasteEntry.ingredientId]?.unitType || 'units'}
-                            </td>
-                            <td className="px-4 py-3">{wasteEntry.reason}</td>
-                            <td className="px-4 py-3 text-right">
                               <button 
                                 className="p-1 text-surface-500 hover:text-blue-500"
                                 onClick={() => {
@@ -1284,6 +1367,10 @@ const Inventory = () => {
                                 <EyeIcon className="h-4 w-4" />
                               </button>
                             </td>
+                            <td className="px-4 py-3">
+                              {wasteEntry.quantity} {wasteEntry.unitType || ingredients.byId[wasteEntry.ingredientId]?.unitType || 'units'}
+                            </td>
+                            <td className="px-4 py-3">{wasteEntry.reason}</td>
                             <td className="px-4 py-3 text-red-600 dark:text-red-400">
                               ${wasteEntry.costImpact.toFixed(2)}
                             </td>
@@ -1307,17 +1394,235 @@ const Inventory = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="mb-4 flex justify-end">
-                <button
-                  onClick={handleGeneratePurchaseOrder}
-                  className="btn bg-indigo-500 hover:bg-indigo-600 text-white flex items-center gap-2"
-                >
-                  <ShoppingCartIcon className="h-4 w-4" />
-                  Generate Purchase Orders
-                </button>
+              {/* Purchase Order Filters and Actions */}
+              <div className="mb-4 flex flex-col md:flex-row gap-3 justify-between">
+                <div className="flex flex-col md:flex-row gap-3">
+                  {/* Search Field */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search purchase orders..."
+                      value={poSearchTerm}
+                      onChange={(e) => setPoSearchTerm(e.target.value)}
+                      className="input pl-9 w-full md:w-64"
+                    />
+                    <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-surface-400" />
+                  </div>
+                  
+                  {/* Status Filter */}
+                  <div className="flex items-center">
+                    <select
+                      value={poStatusFilter}
+                      onChange={(e) => setPoStatusFilter(e.target.value)}
+                      className="select"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="pending">Pending</option>
+                      <option value="ordered">Ordered</option>
+                      <option value="received">Received</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  
+                  {/* Vendor Filter */}
+                  <div className="flex items-center">
+                    <select
+                      value={poVendorFilter}
+                      onChange={(e) => setPoVendorFilter(e.target.value)}
+                      className="select"
+                    >
+                      <option value="all">All Vendors</option>
+                      {vendors.map(vendor => (
+                        <option key={vendor} value={vendor}>{vendor}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCreatePO}
+                    className="btn btn-primary flex items-center gap-1"
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                    Create Purchase Order
+                  </button>
+                  <button
+                    onClick={handleGeneratePurchaseOrder}
+                    className="btn bg-indigo-500 hover:bg-indigo-600 text-white flex items-center gap-1"
+                  >
+                    <ShoppingCartIcon className="h-4 w-4" />
+                    Auto-Generate
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-4">
+                {/* Create Purchase Order Modal */}
+                {isCreatingPO && (
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-surface-800 rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                      <div className="p-6">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-xl font-bold">Create Purchase Order</h3>
+                          <button 
+                            onClick={() => setIsCreatingPO(false)}
+                            className="text-surface-500 hover:text-surface-700"
+                          >
+                            <XIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                        
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          const vendor = e.target.vendor.value;
+                          const notes = e.target.notes.value;
+                          
+                          if (!vendor) {
+                            toast.error('Please select a vendor');
+                            return;
+                          }
+                          
+                          if (newPOItems.length === 0) {
+                            toast.error('Please add at least one item to the order');
+                            return;
+                          }
+                          
+                          handleSubmitPurchaseOrder(vendor, newPOItems, notes);
+                        }}>
+                          <div className="space-y-4">
+                            {/* Vendor Selection */}
+                            <div>
+                              <label htmlFor="vendor" className="label">Vendor *</label>
+                              <select
+                                id="vendor"
+                                name="vendor"
+                                className="select"
+                                required
+                              >
+                                <option value="">Select Vendor</option>
+                                {vendors.map(vendor => (
+                                  <option key={vendor} value={vendor}>{vendor}</option>
+                                ))}
+                              </select>
+                            </div>
+                            
+                            {/* Add Items */}
+                            <div>
+                              <div className="flex justify-between items-center mb-2">
+                                <label className="label mb-0">Order Items *</label>
+                                <select
+                                  className="select !w-auto !py-1 !h-9 text-sm"
+                                  onChange={handleAddItemToPO}
+                                  value=""
+                                >
+                                  <option value="">+ Add Ingredient</option>
+                                  {allIngredients
+                                    .filter(ing => !newPOItems.some(item => item.ingredientId === ing.id))
+                                    .map(ing => (
+                                      <option key={ing.id} value={ing.id}>
+                                        {ing.name} (${ing.cost.toFixed(2)}/{ing.unitType})
+                                      </option>
+                                    ))
+                                  }
+                                </select>
+                              </div>
+                              
+                              {newPOItems.length === 0 ? (
+                                <div className="border border-dashed border-surface-300 dark:border-surface-600 p-4 rounded-lg text-center text-surface-500">
+                                  No items added. Use the dropdown above to add ingredients to this order.
+                                </div>
+                              ) : (
+                                <div className="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden">
+                                  <table className="w-full">
+                                    <thead className="bg-surface-100 dark:bg-surface-700 text-sm">
+                                      <tr>
+                                        <th className="px-4 py-2 text-left text-surface-600 dark:text-surface-300 font-medium">Item</th>
+                                        <th className="px-4 py-2 text-left text-surface-600 dark:text-surface-300 font-medium">Quantity</th>
+                                        <th className="px-4 py-2 text-left text-surface-600 dark:text-surface-300 font-medium">Unit Price</th>
+                                        <th className="px-4 py-2 text-left text-surface-600 dark:text-surface-300 font-medium">Total</th>
+                                        <th className="px-4 py-2 text-surface-600 dark:text-surface-300 font-medium w-16">Action</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-surface-200 dark:divide-surface-700">
+                                      {newPOItems.map((item, index) => (
+                                        <tr key={index} className="hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
+                                          <td className="px-4 py-2">{item.name}</td>
+                                          <td className="px-4 py-2">
+                                            <div className="flex gap-1 items-center">
+                                              <input
+                                                type="number"
+                                                min="1"
+                                                step="1"
+                                                value={item.quantity}
+                                                onChange={(e) => handleUpdatePOItemQuantity(index, parseInt(e.target.value) || 1)}
+                                                className="input !py-1 !h-8 w-20 text-center"
+                                              />
+                                              <span className="text-surface-500 text-sm">{item.unitType}</span>
+                                            </div>
+                                          </td>
+                                          <td className="px-4 py-2">${item.unitPrice.toFixed(2)}</td>
+                                          <td className="px-4 py-2 font-medium">${item.totalPrice.toFixed(2)}</td>
+                                          <td className="px-4 py-2">
+                                            <button
+                                              type="button"
+                                              onClick={() => handleRemovePOItem(index)}
+                                              className="p-1 text-surface-500 hover:text-red-500"
+                                            >
+                                              <XIcon className="h-4 w-4" />
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                    <tfoot className="bg-surface-50 dark:bg-surface-700">
+                                      <tr>
+                                        <td colSpan="3" className="px-4 py-2 text-right font-medium">Total Amount:</td>
+                                        <td colSpan="2" className="px-4 py-2 text-primary font-bold">
+                                          ${newPOItems.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2)}
+                                        </td>
+                                      </tr>
+                                    </tfoot>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Notes */}
+                            <div>
+                              <label htmlFor="notes" className="label">Notes</label>
+                              <textarea
+                                id="notes"
+                                name="notes"
+                                rows="3"
+                                className="input"
+                                placeholder="Add any additional instructions or notes for this order"
+                              ></textarea>
+                            </div>
+                            
+                            <div className="flex justify-end space-x-2 pt-2">
+                              <button
+                                type="button"
+                                onClick={() => setIsCreatingPO(false)}
+                                className="btn btn-outline"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                className="btn btn-primary"
+                                disabled={newPOItems.length === 0}
+                              >
+                                Create Purchase Order
+                              </button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              
                 {purchaseOrders.length === 0 ? (
                   <div className="card p-6 text-center text-surface-500 dark:text-surface-400">
                     No purchase orders found. Generate purchase orders for low-stock items.
@@ -1363,6 +1668,14 @@ const Inventory = () => {
                             <option value="received">Received</option>
                             <option value="cancelled">Cancelled</option>
                           </select>
+                          {po.status !== 'received' && po.status !== 'cancelled' && (
+                            <button
+                              onClick={() => handleReceivePO(po)}
+                              className="btn bg-green-500 hover:bg-green-600 text-white flex items-center gap-1 !py-1 !h-9"
+                            >
+                              <TruckIcon className="h-4 w-4" /> Receive
+                            </button>
+                          )}
                         </div>
                       </div>
                       

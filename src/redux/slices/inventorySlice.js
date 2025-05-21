@@ -236,6 +236,27 @@ const inventorySlice = createSlice({
       if (poIndex !== -1) {
         state.purchaseOrders[poIndex].status = status;
       }
+    },
+    
+    // Receive purchase order
+    receivePurchaseOrder: (state, action) => {
+      const { id } = action.payload;
+      const poIndex = state.purchaseOrders.findIndex(po => po.id === id);
+      
+      if (poIndex !== -1) {
+        // Mark PO as received
+        state.purchaseOrders[poIndex].status = 'received';
+        state.purchaseOrders[poIndex].receivedDate = new Date().toISOString().split('T')[0];
+        
+        // Update inventory for each item
+        state.purchaseOrders[poIndex].items.forEach(item => {
+          if (state.ingredients.byId[item.ingredientId]) {
+            state.ingredients.byId[item.ingredientId].currentStock += item.quantity;
+            state.ingredients.byId[item.ingredientId].lastRestocked = 
+              state.purchaseOrders[poIndex].receivedDate;
+          }
+        });
+      }
     }
   }
 });
