@@ -1192,176 +1192,176 @@ const Tables = () => {
                       </>
                     )}
                     </div>
-                ) : 
-                  selectedTable ? (
-                    <div className="mt-4">
-                      <div className="mt-4">
-                        <h4 className="font-medium mb-3">Edit Table</h4>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="label">Table Number</label>
-                            <input
-                              type="number"
-                              className="input"
-                              value={selectedTable.number}
-                              onChange={(e) => dispatch(updateTable({
-                                id: selectedTable.id,
-                                number: parseInt(e.target.value, 10)
-                              }))}
-                              min="1"
-                            />
-                          </div>
-                          
-                          <div>
-                            <label className="label">Capacity</label>
-                            <input
-                              type="number"
-                              className="input"
-                              value={selectedTable.capacity}
-                              onChange={(e) => dispatch(updateTable({
-                                id: selectedTable.id,
-                                capacity: parseInt(e.target.value, 10)
-                              }))}
-                              min="1"
-                            />
-                          </div>
-                          
-                          <div>
-                            <label className="label">Shape</label>
-                            <div className="flex space-x-4 mt-1">
-                              <label className="flex items-center">
-                                <input
-                                  type="radio"
-                                  name="shape"
-                                  checked={selectedTable.shape === 'circle'}
-                                  onChange={() => dispatch(updateTable({
-                                    id: selectedTable.id,
-                                    shape: 'circle'
-                                  }))}
-                                  className="mr-2"
-                                />
-                                <CircleIcon className="w-4 h-4 mr-1" />
-                                Circle
-                              </label>
-                              
-                              <label className="flex items-center">
-                                <input
-                                  type="radio"
-                                  name="shape"
-                                  checked={selectedTable.shape === 'rectangle'}
-                                  onChange={() => dispatch(updateTable({
-                                    id: selectedTable.id,
-                                    shape: 'rectangle'
-                                  }))}
-                                  className="mr-2"
-                                />
-                                <SquareIcon className="w-4 h-4 mr-1" />
-                                Rectangle
-                              </label>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <label className="label">Section</label>
-                            <select
-                              className="select"
-                              value={selectedTable.section}
-                              onChange={(e) => dispatch(updateTable({
-                                id: selectedTable.id,
-                                section: e.target.value
-                              }))}
-                            >
-                              {sections.map(section => (
-                                <option key={section.id} value={section.id}>
-                                  {section.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          
-                          <div className="pt-2">
-                            <button
-                              onClick={handleDeleteTable}
-                              className="btn bg-red-500 hover:bg-red-600 text-white w-full"
-                            >
-                              <TrashIcon className="w-4 h-4 mr-2" />
-                              Delete Table
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  </div> 
                 ) : (
-                  <div className="mt-4">
-                    {!tableAction ? (
-                      <>
-                        {/* Table actions */}
-                        <div>
-                          <h4 className="font-medium mb-3">Actions</h4>
-                          <div className="space-y-2">
-                            {getAvailableActions(selectedTable).map(action => (
-                              <button
-                                key={action.id}
-                                onClick={() => handleTableAction(action.id)}
-                                className="btn btn-outline w-full flex items-center justify-center"
-                              >
-                                {getIcon(action.icon)({ className: "w-4 h-4 mr-2" })}
-                                {action.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div>
-                          <h4 className="font-medium mb-3">
-                            {tableAction === 'seat' ? 'Seat Guests' :
-                             tableAction === 'reserve' ? 'Make Reservation' :
-                             tableAction === 'clear' ? 'Clear Table' :
-                             tableAction === 'finish-cleaning' ? 'Finish Cleaning' : 'Action'}
-                          </h4>
-                          
-                          <form onSubmit={handleActionSubmit}>
-                            {getFormContent()}
+                  isEditMode && selectedTable ? (
+                      <div className="mt-4">
+                        <div className="mt-4">
+                          <h4 className="font-medium mb-3">Edit Table</h4>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="label">Table Number</label>
+                              <input
+                                type="number"
+                                className="input"
+                                value={selectedTable.number}
+                                onChange={(e) => dispatch(updateTable({
+                                  id: selectedTable.id,
+                                  number: parseInt(e.target.value, 10)
+                                }))}
+                                min="1"
+                              />
+                            </div>
                             
-                            <div className="flex justify-end space-x-2 mt-4">
-                              <button
-                                type="button"
-                                onClick={() => setTableAction(null)}
-                                className="btn btn-outline"
+                            <div>
+                              <label className="label">Capacity</label>
+                              <input
+                                type="number"
+                                className="input"
+                                value={selectedTable.capacity}
+                                onChange={(e) => dispatch(updateTable({
+                                  id: selectedTable.id,
+                                  capacity: parseInt(e.target.value, 10)
+                                }))}
+                                min="1"
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="label">Shape</label>
+                              <div className="flex space-x-4 mt-1">
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="shape"
+                                    checked={selectedTable.shape === 'circle'}
+                                    onChange={() => dispatch(updateTable({
+                                      id: selectedTable.id,
+                                      shape: 'circle'
+                                    }))}
+                                    className="mr-2"
+                                  />
+                                  <CircleIcon className="w-4 h-4 mr-1" />
+                                  Circle
+                                </label>
+                                
+                                <label className="flex items-center">
+                                  <input
+                                    type="radio"
+                                    name="shape"
+                                    checked={selectedTable.shape === 'rectangle'}
+                                    onChange={() => dispatch(updateTable({
+                                      id: selectedTable.id,
+                                      shape: 'rectangle'
+                                    }))}
+                                    className="mr-2"
+                                  />
+                                  <SquareIcon className="w-4 h-4 mr-1" />
+                                  Rectangle
+                                </label>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className="label">Section</label>
+                              <select
+                                className="select"
+                                value={selectedTable.section}
+                                onChange={(e) => dispatch(updateTable({
+                                  id: selectedTable.id,
+                                  section: e.target.value
+                                }))}
                               >
-                                Cancel
-                              </button>
+                                {sections.map(section => (
+                                  <option key={section.id} value={section.id}>
+                                    {section.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            
+                            <div className="pt-2">
                               <button
-                                type="submit"
-                                className={`btn ${
-                                  tableAction === 'clear' 
-                                    ? 'bg-red-500 hover:bg-red-600 text-white' 
-                                    : 'btn-primary'
-                                }`}
+                                onClick={handleDeleteTable}
+                                className="btn bg-red-500 hover:bg-red-600 text-white w-full"
                               >
-                                Confirm
+                                <TrashIcon className="w-4 h-4 mr-2" />
+                                Delete Table
                               </button>
                             </div>
-                          </form>
+                          </div>
                         </div>
-                      </>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="card p-6">
-                      <div className="text-center py-8 text-surface-500 dark:text-surface-400">
-                        <p>Select a table to view details and take actions</p>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="mt-4">
+                        {!tableAction ? (
+                          <>
+                            {/* Table actions */}
+                            <div>
+                              <h4 className="font-medium mb-3">Actions</h4>
+                              <div className="space-y-2">
+                                {getAvailableActions(selectedTable).map(action => (
+                                  <button
+                                    key={action.id}
+                                    onClick={() => handleTableAction(action.id)}
+                                    className="btn btn-outline w-full flex items-center justify-center"
+                                  >
+                                    {getIcon(action.icon)({ className: "w-4 h-4 mr-2" })}
+                                    {action.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <h4 className="font-medium mb-3">
+                                {tableAction === 'seat' ? 'Seat Guests' :
+                                 tableAction === 'reserve' ? 'Make Reservation' :
+                                 tableAction === 'clear' ? 'Clear Table' :
+                                 tableAction === 'finish-cleaning' ? 'Finish Cleaning' : 'Action'}
+                              </h4>
+                              
+                              <form onSubmit={handleActionSubmit}>
+                                {getFormContent()}
+                                
+                                <div className="flex justify-end space-x-2 mt-4">
+                                  <button
+                                    type="button"
+                                    onClick={() => setTableAction(null)}
+                                    className="btn btn-outline"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="submit"
+                                    className={`btn ${
+                                      tableAction === 'clear' 
+                                        ? 'bg-red-500 hover:bg-red-600 text-white' 
+                                        : 'btn-primary'
+                                    }`}
+                                  >
+                                    Confirm
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
                   )
                 }
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="card p-6">
+              <div className="text-center py-8 text-surface-500 dark:text-surface-400">
+                <p>Select a table to view details and take actions</p>
+              </div>
+            </div>
+          )}
   
           {/* Reservations Tab */}
           {activeTab === 'reservations' && (
