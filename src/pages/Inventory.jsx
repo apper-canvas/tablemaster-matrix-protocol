@@ -1001,7 +1001,7 @@ const Inventory = () => {
               {/* Generate Purchase Order Button */}
               <div className="mt-4 flex justify-end">
                 <button
-                  onClick={handleGeneratePurchaseOrder}
+                  onClick={handleCreatePO}
                   className="btn bg-indigo-500 hover:bg-indigo-600 text-white flex items-center gap-2"
                 >
                   <ShoppingCartIcon className="h-4 w-4" />
