@@ -1192,8 +1192,9 @@ const Tables = () => {
                       </>
                     )}
                     </div>
-                </div>
-              ) : (
+                  </div>
+                ) : (
+                  <div>
                 ) : (
                   isEditMode && selectedTable ? (
                       <div className="mt-4">
@@ -1351,7 +1352,7 @@ const Tables = () => {
                           </>
                         )}
                       </div>
-                    </div>
+                    )}
                 }
               </div>
             </div>
