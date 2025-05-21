@@ -95,9 +95,11 @@ const initialState = {
       ingredientName: 'Chicken Breast',
       quantity: 1.5,
       date: '2023-06-17',
+      unitType: 'kg',
       reason: 'Spoilage',
       costImpact: 8.25,
-      loggedBy: 'John Smith'
+      loggedBy: 'John Smith',
+      notes: 'Found during morning inventory check'
     },
     {
       id: 'waste-2',
@@ -105,8 +107,10 @@ const initialState = {
       ingredientName: 'Tomatoes',
       quantity: 2,
       date: '2023-06-18',
+      unitType: 'kg',
       reason: 'Quality issues',
       costImpact: 5.6,
+      notes: '',
       loggedBy: 'Emma Davis'
     }
   ],
@@ -191,6 +195,7 @@ const inventorySlice = createSlice({
         ...action.payload,
         date: action.payload.date || new Date().toISOString().split('T')[0]
       };
+      wasteEntry.unitType = wasteEntry.unitType || (state.ingredients.byId[wasteEntry.ingredientId]?.unitType || 'units');
       
       // Add to waste log
       state.waste.push(wasteEntry);

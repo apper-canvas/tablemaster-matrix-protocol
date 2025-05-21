@@ -291,13 +291,15 @@ const WasteLogForm = ({ ingredient, onSubmit, onCancel }) => {
     ingredientId: ingredient?.id || '',
     ingredientName: ingredient?.name || '',
     quantity: 0,
+    unitType: ingredient?.unitType || 'units',
     reason: '',
     loggedBy: '',
+    notes: '',
     date: new Date().toISOString().split('T')[0]
   });
 
   const reasons = [
-    'Spoilage', 'Expired', 'Preparation Error', 'Quality Issues', 
+    'Spoilage', 'Expired', 'Preparation Error', 'Quality Issues',
     'Customer Return', 'Damaged Packaging', 'Other'
   ];
 
@@ -306,7 +308,7 @@ const WasteLogForm = ({ ingredient, onSubmit, onCancel }) => {
     let processedValue = value;
     
     if (name === 'quantity') {
-      processedValue = parseFloat(value) || 0;
+      processedValue = parseFloat(value) || '';
     }
     
     setFormData(prev => ({
@@ -320,8 +322,8 @@ const WasteLogForm = ({ ingredient, onSubmit, onCancel }) => {
     
     // Validation
     if (formData.quantity <= 0) {
-      toast.error('Quantity must be greater than zero');
-      return;
+    if (!formData.quantity || formData.quantity <= 0) {
+      toast.error('Please enter a valid quantity greater than zero');
     }
     
     if (!formData.reason) {
@@ -417,6 +419,19 @@ const WasteLogForm = ({ ingredient, onSubmit, onCancel }) => {
         />
       </div>
       
+      <div>
+        <label htmlFor="notes" className="label">Additional Notes</label>
+        <textarea
+          id="notes"
+          name="notes"
+          value={formData.notes}
+          onChange={handleChange}
+          rows="2"
+          className="input"
+          placeholder="Optional details about this waste entry"
+        ></textarea>
+      </div>
+      
       <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
         <p className="text-sm text-yellow-800 dark:text-yellow-400">
           This will record a waste of {formData.quantity} {ingredient?.unitType || 'units'} of {ingredient?.name || 'this ingredient'} and reduce the inventory accordingly.
@@ -454,6 +469,9 @@ const Inventory = () => {
   const waste = useSelector(state => state.inventory.waste);
   const purchaseOrders = useSelector(state => state.inventory.purchaseOrders);
   
+  // New state for waste log tab
+  const [wasteSearchTerm, setWasteSearchTerm] = useState('');
+  const [wasteFilter, setWasteFilter] = useState({ dateRange: 'all', reason: 'all' });
   const [activeTab, setActiveTab] = useState('ingredients');
   const [searchTerm, setSearchTerm] = useState('');
   const [sort, setSort] = useState('name');
@@ -467,6 +485,7 @@ const Inventory = () => {
   
   // Icons
   const PlusIcon = getIcon('plus');
+  const CalendarIcon = getIcon('calendar');
   const SearchIcon = getIcon('search');
   const FilterIcon = getIcon('filter');
   const SortIcon = getIcon('arrow-up-down');
@@ -479,6 +498,9 @@ const Inventory = () => {
   const ShoppingCartIcon = getIcon('shopping-cart');
   const InfoIcon = getIcon('info');
   const XIcon = getIcon('x');
+  const EyeIcon = getIcon('eye');
+  const DollarSignIcon = getIcon('dollar-sign');
+  const FileBarChartIcon = getIcon('file-bar-chart');
   
   // Filter and sort ingredients
   const filteredIngredients = ingredients.allIds
@@ -521,6 +543,56 @@ const Inventory = () => {
     .map(ing => ing.category)
     .filter((value, index, self) => self.indexOf(value) === index)
     .sort();
+    
+  // Filter and prepare waste logs for display
+  const filteredWaste = waste
+    .filter(entry => {
+      // Apply search filter
+      const matchesSearch = wasteSearchTerm === '' || 
+        entry.ingredientName.toLowerCase().includes(wasteSearchTerm.toLowerCase()) ||
+        entry.loggedBy.toLowerCase().includes(wasteSearchTerm.toLowerCase()) ||
+        (entry.notes && entry.notes.toLowerCase().includes(wasteSearchTerm.toLowerCase()));
+        
+      // Apply date range filter
+      let matchesDateRange = true;
+      if (wasteFilter.dateRange !== 'all') {
+        const today = new Date();
+        const entryDate = new Date(entry.date);
+        
+        if (wasteFilter.dateRange === 'today') {
+          matchesDateRange = entryDate.toDateString() === today.toDateString();
+        } else if (wasteFilter.dateRange === 'week') {
+          const lastWeek = new Date(today);
+          lastWeek.setDate(today.getDate() - 7);
+          matchesDateRange = entryDate >= lastWeek;
+        } else if (wasteFilter.dateRange === 'month') {
+          const lastMonth = new Date(today);
+          lastMonth.setMonth(today.getMonth() - 1);
+          matchesDateRange = entryDate >= lastMonth;
+        }
+      }
+      
+      // Apply reason filter
+      const matchesReason = wasteFilter.reason === 'all' || entry.reason === wasteFilter.reason;
+      
+      return matchesSearch && matchesDateRange && matchesReason;
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date, newest first
+  
+  // Calculate waste analytics
+  const wasteAnalytics = {
+    totalItems: filteredWaste.length,
+    totalCost: filteredWaste.reduce((sum, entry) => sum + entry.costImpact, 0),
+    byReason: filteredWaste.reduce((acc, entry) => {
+      acc[entry.reason] = (acc[entry.reason] || 0) + 1;
+      return acc;
+    }, {}),
+    topIngredient: filteredWaste.length > 0 ? 
+      Object.entries(filteredWaste.reduce((acc, entry) => {
+        acc[entry.ingredientName] = (acc[entry.ingredientName] || 0) + entry.costImpact;
+        return acc;
+      }, {})).sort((a, b) => b[1] - a[1])[0] : null
+  };
   
   // Handle adding a new ingredient
   const handleAddIngredient = (formData) => {
@@ -573,6 +645,20 @@ const Inventory = () => {
     dispatch(logWaste(wasteData));
     setActionMode(null);
     toast.success(`Waste logged successfully`);
+  };
+  
+  // Handle opening waste form from waste tab
+  const handleAddWasteFromTab = () => {
+    // Open a dialog to select an ingredient first
+    const options = ingredients.allIds.map(id => ({
+      value: id,
+      label: ingredients.byId[id].name
+    }));
+    
+    if (options.length === 0) {
+      toast.error('You need to add ingredients before logging waste');
+      return;
+    }
   };
   
   // Handle generating purchase orders
@@ -1005,6 +1091,110 @@ const Inventory = () => {
             <motion.div
               key="waste-tab"
               initial={{ opacity: 0 }}
+            >
+              {/* Waste Log Actions */}
+              <div className="mb-4 flex flex-col md:flex-row gap-3 justify-between">
+                <div className="flex flex-col md:flex-row gap-3">
+                  {/* Search Field */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search waste logs..."
+                      value={wasteSearchTerm}
+                      onChange={(e) => setWasteSearchTerm(e.target.value)}
+                      className="input pl-9 w-full md:w-64"
+                    />
+                    <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-surface-400" />
+                  </div>
+                  
+                  {/* Date Range Filter */}
+                  <div className="flex items-center">
+                    <select
+                      value={wasteFilter.dateRange}
+                      onChange={(e) => setWasteFilter(prev => ({ ...prev, dateRange: e.target.value }))}
+                      className="select"
+                    >
+                      <option value="all">All Dates</option>
+                      <option value="today">Today</option>
+                      <option value="week">Last 7 Days</option>
+                      <option value="month">Last 30 Days</option>
+                    </select>
+                  </div>
+                  
+                  {/* Reason Filter */}
+                  <div className="flex items-center">
+                    <select
+                      value={wasteFilter.reason}
+                      onChange={(e) => setWasteFilter(prev => ({ ...prev, reason: e.target.value }))}
+                      className="select"
+                    >
+                      <option value="all">All Reasons</option>
+                      {[...new Set(waste.map(w => w.reason))].map(reason => (
+                        <option key={reason} value={reason}>{reason}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Log New Waste Button */}
+                <button
+                  onClick={() => {
+                    const id = ingredients.allIds[0];
+                    if (id) {
+                      setSelectedIngredient(ingredients.byId[id]);
+                      setActionMode('log-waste');
+                    } else {
+                      toast.error('You need to add ingredients before logging waste');
+                    }
+                  }}
+                  className="btn bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-1"
+                  disabled={ingredients.allIds.length === 0}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  <span>Log New Waste</span>
+                </button>
+              </div>
+              
+              {/* Waste Analytics */}
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="card p-4 flex items-center gap-3">
+                  <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                    <DollarSignIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-surface-500">Total Waste Cost</div>
+                    <div className="text-xl font-bold">${wasteAnalytics.totalCost.toFixed(2)}</div>
+                  </div>
+                </div>
+                
+                <div className="card p-4 flex items-center gap-3">
+                  <div className="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">
+                    <TrashIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-surface-500">Waste Entries</div>
+                    <div className="text-xl font-bold">{wasteAnalytics.totalItems}</div>
+                  </div>
+                </div>
+                
+                <div className="card p-4 flex items-center gap-3">
+                  <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                    <FileBarChartIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-surface-500">Most Wasted (Cost)</div>
+                    <div className="text-xl font-bold truncate max-w-[180px]">
+                      {wasteAnalytics.topIngredient ? 
+                        `${wasteAnalytics.topIngredient[0]}` : 
+                        'None'}
+                    </div>
+                    {wasteAnalytics.topIngredient && (
+                      <div className="text-sm text-red-500">${wasteAnalytics.topIngredient[1].toFixed(2)}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
@@ -1016,6 +1206,7 @@ const Inventory = () => {
                       <tr>
                         <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Date</th>
                         <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Ingredient</th>
+                        <th className="px-4 py-3 text-right text-surface-600 dark:text-surface-300 font-medium">Actions</th>
                         <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Quantity</th>
                         <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Reason</th>
                         <th className="px-4 py-3 text-left text-surface-600 dark:text-surface-300 font-medium">Cost Impact</th>
@@ -1026,18 +1217,73 @@ const Inventory = () => {
                       {waste.length === 0 ? (
                         <tr>
                           <td colSpan="6" className="px-4 py-6 text-center text-surface-500 dark:text-surface-400">
-                            No waste logs found.
+                        filteredWaste.length === 0 ? (
+                         <tr>
+                           <td colSpan="7" className="px-4 py-6 text-center text-surface-500 dark:text-surface-400">
+                             No waste logs match your search criteria.
+                           </td>
+                         </tr>
+                        ) : filteredWaste.map(wasteEntry => (
                           </td>
-                        </tr>
+                            <td className="px-4 py-3">
+                              {new Date(wasteEntry.date).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </td>
                       ) : (
                         waste.map(wasteEntry => (
-                          <tr key={wasteEntry.id} className="hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
+                              {wasteEntry.quantity} {wasteEntry.unitType || ingredients.byId[wasteEntry.ingredientId]?.unitType || 'units'}
                             <td className="px-4 py-3">{wasteEntry.date}</td>
                             <td className="px-4 py-3">{wasteEntry.ingredientName}</td>
                             <td className="px-4 py-3">
                               {wasteEntry.quantity} {ingredients.byId[wasteEntry.ingredientId]?.unitType || 'units'}
                             </td>
                             <td className="px-4 py-3">{wasteEntry.reason}</td>
+                            <td className="px-4 py-3 text-right">
+                              <button 
+                                className="p-1 text-surface-500 hover:text-blue-500"
+                                onClick={() => {
+                                  // Show waste details
+                                  const ingredient = ingredients.byId[wasteEntry.ingredientId];
+                                  // Format the waste details for display
+                                  const details = `
+                                    <div class="space-y-3">
+                                      <div>
+                                        <span class="font-medium">Date:</span> ${new Date(wasteEntry.date).toLocaleDateString('en-US', { 
+                                          year: 'numeric', month: 'long', day: 'numeric' 
+                                        })}
+                                      </div>
+                                      <div>
+                                        <span class="font-medium">Ingredient:</span> ${wasteEntry.ingredientName}
+                                      </div>
+                                      <div>
+                                        <span class="font-medium">Quantity:</span> ${wasteEntry.quantity} ${wasteEntry.unitType || ingredient?.unitType || 'units'}
+                                      </div>
+                                      <div>
+                                        <span class="font-medium">Reason:</span> ${wasteEntry.reason}
+                                      </div>
+                                      <div>
+                                        <span class="font-medium">Cost Impact:</span> $${wasteEntry.costImpact.toFixed(2)}
+                                      </div>
+                                      <div>
+                                        <span class="font-medium">Logged By:</span> ${wasteEntry.loggedBy}
+                                      </div>
+                                      ${wasteEntry.notes ? `
+                                      <div>
+                                        <span class="font-medium">Notes:</span> ${wasteEntry.notes}
+                                      </div>
+                                      ` : ''}
+                                    </div>
+                                  `;
+                                  
+                                  toast.info(details, { dangerouslySetInnerHTML: true, autoClose: false });
+                                }}
+                              >
+                                <EyeIcon className="h-4 w-4" />
+                              </button>
+                            </td>
                             <td className="px-4 py-3 text-red-600 dark:text-red-400">
                               ${wasteEntry.costImpact.toFixed(2)}
                             </td>
