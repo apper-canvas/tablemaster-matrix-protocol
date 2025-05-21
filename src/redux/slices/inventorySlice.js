@@ -261,6 +261,6 @@ const inventorySlice = createSlice({
   }
 });
 
-export const { addIngredient, updateIngredient, deleteIngredient, decreaseStock, addStock, logWaste, generatePurchaseOrder, updatePurchaseOrderStatus } = inventorySlice.actions;
+export const { addIngredient, updateIngredient, deleteIngredient, decreaseStock, addStock, logWaste, generatePurchaseOrder, updatePurchaseOrderStatus, receivePurchaseOrder } = inventorySlice.actions;
 
 export default inventorySlice.reducer;

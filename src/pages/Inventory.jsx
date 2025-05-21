@@ -1001,7 +1001,7 @@ const Inventory = () => {
               {/* Generate Purchase Order Button */}
               <div className="mt-4 flex justify-end">
                 <button
-                  onClick={handleCreatePO}
+                    onClick={handleCreatePO}
                   className="btn bg-indigo-500 hover:bg-indigo-600 text-white flex items-center gap-2"
                 >
                   <ShoppingCartIcon className="h-4 w-4" />
@@ -1290,8 +1290,6 @@ const Inventory = () => {
                   </div>
                 </div>
               </div>
-              transition={{ duration: 0.3 }}
-            >
               <div className="card overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -1478,7 +1476,7 @@ const Inventory = () => {
                           const vendor = e.target.vendor.value;
                           const notes = e.target.notes.value;
                           
-                          if (!vendor) {
+                          if (!vendor || vendor.trim() === "") {
                             toast.error('Please select a vendor');
                             return;
                           }
@@ -1488,7 +1486,10 @@ const Inventory = () => {
                             return;
                           }
                           
-                          handleSubmitPurchaseOrder(vendor, newPOItems, notes);
+                          // Submit the purchase order
+                          dispatch(generatePurchaseOrder({ vendor, items: newPOItems, notes }));
+                          setIsCreatingPO(false);
+                          toast.success(`Purchase order created successfully`);
                         }}>
                           <div className="space-y-4">
                             {/* Vendor Selection */}
