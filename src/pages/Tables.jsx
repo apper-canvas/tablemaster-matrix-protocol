@@ -1193,8 +1193,6 @@ const Tables = () => {
                     )}
                     </div>
                   </div>
-                ) : (
-                  <>
                   {isEditMode && selectedTable ? (
                   <div className="mt-4">
                     <div>
@@ -1352,10 +1350,10 @@ const Tables = () => {
               )}
             </div>
           </div>
-        </div>
+                  </>
+                )}
       )}
           {activeTab !== 'floorplan' && (
-            <div className="card p-6">
             <div className="card p-6">
               <div className="text-center py-8 text-surface-500 dark:text-surface-400">
                 <p>Select a table to view details and take actions</p>
