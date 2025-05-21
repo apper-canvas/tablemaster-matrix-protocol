@@ -8,7 +8,7 @@ import { format, parseISO, addDays, isBefore, isAfter, formatDistanceToNow } fro
 import { getIcon } from '../utils/iconUtils';
 import TableFloorPlan from '../components/TableFloorPlan';
 import {
-  updateTable, setTableStatus, addTable, deleteTable, addReservation, updateReservation, cancelReservation
+  updateTable, setTableStatus, addTable, deleteTable, addReservation, updateReservation, cancelReservation, addToWaitlist, updateWaitlistEntry, notifyCustomer, removeFromWaitlist
 } from '../redux/slices/tablesSlice';
 
 const Tables = () => {
@@ -49,6 +49,10 @@ const Tables = () => {
   const [isEditingReservation, setIsEditingReservation] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [reservationFilter, setReservationFilter] = useState('upcoming');
+  
+  // Waitlist state
+  const waitlist = useSelector((state) => state.tables.waitlist);
+  const [waitlistFilter, setWaitlistFilter] = useState('waiting');
   // Icons
   const EditIcon = getIcon('edit');
   const SaveIcon = getIcon('save');
@@ -66,6 +70,12 @@ const Tables = () => {
   const SearchIcon = getIcon('search');
   const FilterIcon = getIcon('filter');
   const AlertCircleIcon = getIcon('alert-circle');
+  const BellIcon = getIcon('bell');
+  const BellOffIcon = getIcon('bell-off');
+  const ClipboardIcon = getIcon('clipboard');
+  const SendIcon = getIcon('send');
+  const TimerIcon = getIcon('timer');
+  const UserXIcon = getIcon('user-x');
 
   // Handle selecting a table
   const handleSelectTable = (table) => {
@@ -579,6 +589,125 @@ const Tables = () => {
     }
   }, [reservations, reservationFilter]);
 
+  // Filter waitlist entries based on status
+  const filteredWaitlist = useMemo(() => {
+    switch (waitlistFilter) {
+      case 'waiting':
+        return waitlist.filter(entry => entry.status === 'waiting');
+      case 'notified':
+        return waitlist.filter(entry => entry.notified && entry.status === 'waiting');
+      case 'seated':
+        return waitlist.filter(entry => entry.status === 'seated');
+      case 'cancelled':
+        return waitlist.filter(entry => entry.status === 'cancelled');
+      default:
+        return waitlist;
+    }
+  }, [waitlist, waitlistFilter]);
+
+  // Waitlist management
+  const [isAddingToWaitlist, setIsAddingToWaitlist] = useState(false);
+  const [isEditingWaitlist, setIsEditingWaitlist] = useState(false);
+  const [selectedWaitlistEntry, setSelectedWaitlistEntry] = useState(null);
+  const [waitlistForm, setWaitlistForm] = useState({
+    customerName: '',
+    phoneNumber: '',
+    partySize: 2,
+    notes: ''
+  });
+  const [showRemoveWaitlistDialog, setShowRemoveWaitlistDialog] = useState(false);
+  const [removeReason, setRemoveReason] = useState('seated');
+
+  // Handle adding to waitlist
+  const handleAddToWaitlist = () => {
+    setWaitlistForm({
+      customerName: '',
+      phoneNumber: '',
+      partySize: 2,
+      notes: ''
+    });
+    setIsAddingToWaitlist(true);
+  };
+
+  // Handle editing waitlist entry
+  const handleEditWaitlist = (entry) => {
+    setSelectedWaitlistEntry(entry);
+    setWaitlistForm({
+      customerName: entry.customerName,
+      phoneNumber: entry.phoneNumber,
+      partySize: entry.partySize,
+      notes: entry.notes || ''
+    });
+    setIsEditingWaitlist(true);
+  };
+
+  // Handle waitlist form change
+  const handleWaitlistFormChange = (e) => {
+    const { name, value } = e.target;
+    setWaitlistForm({
+      ...waitlistForm,
+      [name]: name === 'partySize' ? parseInt(value, 10) || '' : value
+    });
+  };
+
+  // Handle waitlist form submission
+  const handleWaitlistSubmit = (e) => {
+    e.preventDefault();
+    
+    // Form validation
+    if (!waitlistForm.customerName) {
+      toast.error('Customer name is required');
+      return;
+    }
+    
+    if (isEditingWaitlist && selectedWaitlistEntry) {
+      // Update existing entry
+      dispatch(updateWaitlistEntry({
+        id: selectedWaitlistEntry.id,
+        ...waitlistForm
+      }));
+      toast.success(`Updated waitlist entry for ${waitlistForm.customerName}`);
+      setIsEditingWaitlist(false);
+    } else {
+      // Add new entry
+      dispatch(addToWaitlist(waitlistForm));
+      toast.success(`Added ${waitlistForm.customerName} to the waitlist`);
+      setIsAddingToWaitlist(false);
+    }
+    
+    setSelectedWaitlistEntry(null);
+  };
+
+  // Handle notifying customer
+  const handleNotifyCustomer = (entry) => {
+    dispatch(notifyCustomer({ id: entry.id }));
+    toast.success(`Notification sent to ${entry.customerName}`);
+  };
+
+  // Handle removing from waitlist dialog
+  const handleRemoveFromWaitlist = (entry, reason) => {
+    setSelectedWaitlistEntry(entry);
+    setRemoveReason(reason);
+    setShowRemoveWaitlistDialog(true);
+  };
+
+  // Confirm removal from waitlist
+  const confirmRemoveFromWaitlist = () => {
+    if (!selectedWaitlistEntry) return;
+    
+    dispatch(removeFromWaitlist({
+      id: selectedWaitlistEntry.id,
+      reason: removeReason
+    }));
+    
+    toast.success(
+      removeReason === 'seated' 
+        ? `${selectedWaitlistEntry.customerName} has been seated` 
+        : `${selectedWaitlistEntry.customerName} has been removed from the waitlist`
+    );
+    setShowRemoveWaitlistDialog(false);
+  };
+
   // Reservation Management Component
   const ReservationManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -716,6 +845,180 @@ const Tables = () => {
           </div>
         ) : (
           <div className="text-center py-8 text-surface-500">No reservations found</div>
+        )}
+      </div>
+    );
+  };
+
+  // Waitlist Management Component
+  const WaitlistManagement = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    // Filter waitlist by search term
+    const searchedWaitlist = filteredWaitlist.filter(entry =>
+      entry.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      entry.phoneNumber.includes(searchTerm)
+    );
+    
+    // Calculate wait time elapsed
+    const getWaitTimeElapsed = (timeAdded) => {
+      const addedTime = new Date(timeAdded);
+      const now = new Date();
+      const diffMs = now - addedTime;
+      const diffMins = Math.floor(diffMs / 60000);
+      
+      if (diffMins < 60) {
+        return `${diffMins} min`;
+      } else {
+        const hours = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+        return `${hours}h ${mins}m`;
+      }
+    };
+    
+    return (
+      <div className="card p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold">Waitlist</h3>
+          <button
+            onClick={handleAddToWaitlist}
+            className="btn btn-primary"
+          >
+            <PlusIcon className="w-4 h-4 mr-2" /> Add to Waitlist
+          </button>
+        </div>
+        
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-grow">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <SearchIcon className="h-5 w-5 text-surface-400" />
+            </div>
+            <input
+              type="text"
+              className="input pl-10"
+              placeholder="Search by name or phone"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <FilterIcon className="h-5 w-5 text-surface-500" />
+            <select
+              value={waitlistFilter}
+              onChange={(e) => setWaitlistFilter(e.target.value)}
+              className="select"
+            >
+              <option value="waiting">Waiting</option>
+              <option value="notified">Notified</option>
+              <option value="seated">Seated</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+        </div>
+        
+        {searchedWaitlist.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-surface-200 dark:divide-surface-700">
+              <thead>
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Customer</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Party Size</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Wait Time</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-200 dark:divide-surface-700">
+                {searchedWaitlist.map(entry => (
+                  <tr key={entry.id} className="hover:bg-surface-100 dark:hover:bg-surface-700/50">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="font-medium">{entry.customerName}</div>
+                      <div className="text-sm text-surface-500">{entry.phoneNumber}</div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                      {entry.partySize}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <TimerIcon className="w-4 h-4 mr-1 text-surface-500" />
+                        <div>
+                          <div className="font-medium">{getWaitTimeElapsed(entry.timeAdded)}</div>
+                          <div className="text-xs text-surface-500">Est: {entry.estimatedWaitTime} min</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        entry.status === 'waiting' 
+                          ? entry.notified 
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-400'
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-400'
+                          : entry.status === 'seated'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400'
+                            : 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400'
+                      }`}>
+                        {entry.status === 'waiting' 
+                          ? entry.notified ? 'Notified' : 'Waiting' 
+                          : entry.status === 'seated' ? 'Seated' : 'Cancelled'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        {entry.status === 'waiting' && (
+                          <>
+                            <button
+                              onClick={() => handleNotifyCustomer(entry)}
+                              className={`p-1 rounded-md hover:bg-surface-200 dark:hover:bg-surface-700 ${
+                                entry.notified ? 'text-blue-500' : 'text-yellow-500'
+                              }`}
+                              title={entry.notified ? 'Notify Again' : 'Notify'}
+                              disabled={entry.notified}
+                            >
+                              {entry.notified ? <BellOffIcon className="w-4 h-4" /> : <BellIcon className="w-4 h-4" />}
+                            </button>
+                            <button
+                              onClick={() => handleRemoveFromWaitlist(entry, 'seated')}
+                              className="p-1 rounded-md hover:bg-surface-200 dark:hover:bg-surface-700 text-green-500"
+                              title="Seat Customer"
+                            >
+                              <CheckIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleEditWaitlist(entry)}
+                              className="p-1 rounded-md hover:bg-surface-200 dark:hover:bg-surface-700"
+                              title="Edit"
+                            >
+                              <EditIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleRemoveFromWaitlist(entry, 'cancelled')}
+                              className="p-1 rounded-md hover:bg-surface-200 dark:hover:bg-surface-700 text-red-500"
+                              title="Remove"
+                            >
+                              <XIcon className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-surface-500">
+            <ClipboardIcon className="h-12 w-12 mx-auto mb-3 text-surface-400" />
+            <p>No customers on the waitlist</p>
+            <button 
+              onClick={handleAddToWaitlist}
+              className="mt-4 btn btn-outline"
+            >
+              Add Customer to Waitlist
+            </button>
+          </div>
         )}
       </div>
     );
@@ -1055,9 +1358,8 @@ const Tables = () => {
         
         {/* Waitlist Tab - Placeholder for future implementation */}
         {activeTab === 'waitlist' && (
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold mb-4">Waitlist</h3>
-            <p className="text-center py-8 text-surface-500">Waitlist functionality coming soon</p>
+          <WaitlistManagement />
+        )}
           </div>
         )}
         
@@ -1242,6 +1544,130 @@ const Tables = () => {
         )}
         
         {/* Add Table Modal */}
+      {/* Add/Edit Waitlist Entry Modal */}
+      {(isAddingToWaitlist || isEditingWaitlist) && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">
+              {isEditingWaitlist ? 'Edit Waitlist Entry' : 'Add to Waitlist'}
+            </h3>
+            
+            <form onSubmit={handleWaitlistSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="customerName" className="label">Customer Name *</label>
+                  <input
+                    type="text"
+                    id="customerName"
+                    name="customerName"
+                    value={waitlistForm.customerName}
+                    onChange={handleWaitlistFormChange}
+                    className="input"
+                    placeholder="Enter customer name"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="phoneNumber" className="label">Phone Number *</label>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    value={waitlistForm.phoneNumber}
+                    onChange={handleWaitlistFormChange}
+                    className="input"
+                    placeholder="Enter phone number"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="partySize" className="label">Party Size *</label>
+                  <input
+                    type="number"
+                    id="partySize"
+                    name="partySize"
+                    value={waitlistForm.partySize}
+                    onChange={handleWaitlistFormChange}
+                    className="input"
+                    min="1"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="notes" className="label">Notes</label>
+                  <textarea
+                    id="notes"
+                    name="notes"
+                    value={waitlistForm.notes}
+                    onChange={handleWaitlistFormChange}
+                    className="input"
+                    placeholder="Any special requests or notes"
+                    rows="3"
+                  ></textarea>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingToWaitlist(false);
+                    setIsEditingWaitlist(false);
+                  }}
+                  className="btn btn-outline"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                >
+                  {isEditingWaitlist ? 'Update Entry' : 'Add to Waitlist'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      {/* Remove from Waitlist Confirmation Dialog */}
+      {showRemoveWaitlistDialog && selectedWaitlistEntry && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md">
+            <div className="flex items-center mb-4 text-red-500">
+              <AlertCircleIcon className="w-6 h-6 mr-2" />
+              <h3 className="text-lg font-semibold">
+                {removeReason === 'seated' ? 'Seat Customer' : 'Remove from Waitlist'}
+              </h3>
+            </div>
+            
+            <p className="mb-4">
+              {removeReason === 'seated' 
+                ? `Are you sure you want to mark ${selectedWaitlistEntry.customerName} as seated?` 
+                : `Are you sure you want to remove ${selectedWaitlistEntry.customerName} from the waitlist?`}
+            </p>
+            
+            <div className="flex justify-end space-x-2 mt-6">
+              <button
+                onClick={() => setShowRemoveWaitlistDialog(false)}
+                className="btn btn-outline"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRemoveFromWaitlist}
+                className={`btn ${removeReason === 'seated' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'} text-white`}
+              >
+                {removeReason === 'seated' ? 'Yes, Seat Customer' : 'Yes, Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
         {isAddingTable && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md">

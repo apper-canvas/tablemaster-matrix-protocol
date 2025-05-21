@@ -135,6 +135,46 @@ const initialState = {
       cancellationReason: 'Customer request'
     }
   ]
+  ,
+  waitlist: [
+    {
+      id: 'wait-1',
+      customerName: 'Martinez Family',
+      phoneNumber: '555-111-2222',
+      partySize: 4,
+      notes: 'No window seat',
+      timeAdded: '2023-07-25T18:30:00',
+      estimatedWaitTime: 25,
+      status: 'waiting',
+      notified: false
+    },
+    {
+      id: 'wait-2',
+      customerName: 'Anderson Party',
+      phoneNumber: '555-333-4444',
+      partySize: 6,
+      notes: 'Birthday celebration',
+      timeAdded: '2023-07-25T18:45:00',
+      estimatedWaitTime: 35,
+      status: 'waiting',
+      notified: false
+    },
+    {
+      id: 'wait-3',
+      customerName: 'Chen Couple',
+      phoneNumber: '555-555-6666',
+      partySize: 2,
+      notes: 'Anniversary',
+      timeAdded: '2023-07-25T19:00:00',
+      estimatedWaitTime: 15,
+      status: 'waiting',
+      notified: false
+    }
+  ],
+  waitlistSettings: {
+    enableSmsNotifications: true,
+    autoNotify: false
+  }
 };
 
 const tablesSlice = createSlice({
@@ -260,8 +300,82 @@ const tablesSlice = createSlice({
           state.tables[tableIndex].status = 'available';
         }
       }
+    },
+    addToWaitlist: (state, action) => {
+      const { customerName, phoneNumber, partySize, notes } = action.payload;
+      
+      // Calculate estimated wait time based on party size and available tables
+      let estimatedWaitTime = 15; // Default base wait time
+      
+      // Adjust wait time based on party size
+      if (partySize > 4) {
+        estimatedWaitTime += 10;
+      } else if (partySize > 2) {
+        estimatedWaitTime += 5;
+      }
+      
+      // Adjust based on number of parties already waiting
+      estimatedWaitTime += state.waitlist.filter(entry => entry.status === 'waiting').length * 5;
+      
+      // Adjust based on table availability
+      const availableTables = state.tables.filter(table => 
+        table.status === 'available' && table.capacity >= partySize
+      ).length;
+      
+      if (availableTables === 0) {
+        estimatedWaitTime += 15;
+      }
+      
+      const newEntry = {
+        id: uuidv4(),
+        customerName,
+        phoneNumber,
+        partySize,
+        notes,
+        timeAdded: new Date().toISOString(),
+        estimatedWaitTime,
+        status: 'waiting',
+        notified: false
+      };
+      
+      state.waitlist.push(newEntry);
+    },
+    updateWaitlistEntry: (state, action) => {
+      const { id, ...changes } = action.payload;
+      const index = state.waitlist.findIndex(entry => entry.id === id);
+      
+      if (index !== -1) {
+        state.waitlist[index] = {
+          ...state.waitlist[index],
+          ...changes,
+          updatedAt: new Date().toISOString()
+        };
+      }
+    },
+    notifyCustomer: (state, action) => {
+      const { id } = action.payload;
+      const index = state.waitlist.findIndex(entry => entry.id === id);
+      
+      if (index !== -1) {
+        state.waitlist[index].notified = true;
+        state.waitlist[index].notifiedAt = new Date().toISOString();
+      }
+    },
+    removeFromWaitlist: (state, action) => {
+      const { id, reason } = action.payload;
+      const index = state.waitlist.findIndex(entry => entry.id === id);
+      
+      if (index !== -1) {
+        if (reason === 'seated') {
+          state.waitlist[index].status = 'seated';
+          state.waitlist[index].seatedAt = new Date().toISOString();
+        } else {
+          state.waitlist[index].status = 'cancelled';
+          state.waitlist[index].cancelledAt = new Date().toISOString();
+        }
+      }
     }
   }
 });
-export const { addTable, updateTable, deleteTable, moveTable, setTableStatus, addReservation, updateReservation, cancelReservation } = tablesSlice.actions;
+export const { addTable, updateTable, deleteTable, moveTable, setTableStatus, addReservation, updateReservation, cancelReservation, addToWaitlist, updateWaitlistEntry, notifyCustomer, removeFromWaitlist } = tablesSlice.actions;
 export default tablesSlice.reducer;
