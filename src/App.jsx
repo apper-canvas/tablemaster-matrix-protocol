@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { getIcon } from './utils/iconUtils';
@@ -22,29 +22,29 @@ const Header = ({ darkMode, toggleDarkMode }) => {
       <div className="app-container">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <a href="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <RestaurantIcon className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 TableMaster
               </span>
-            </a>
+            </Link>
             
             <nav className="hidden md:ml-10 md:flex md:space-x-8">
-              <a href="/" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+              <Link to="/" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Dashboard
-              </a>
-              <a href="#orders" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+              </Link>
+              <Link to="#orders" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Orders
-              </a>
-              <a href="#tables" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+              </Link>
+              <Link to="#tables" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Tables
-              </a>
-              <a href="/inventory" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+              </Link>
+              <Link to="/inventory" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Inventory
-              </a>
-              <a href="/menu" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+              </Link>
+              <Link to="/menu" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Menu
-              </a>
+              </Link>
             </nav>
           </div>
           
@@ -74,21 +74,21 @@ const Header = ({ darkMode, toggleDarkMode }) => {
         {isMenuOpen && (
           <div className="md:hidden py-3 border-t border-surface-200 dark:border-surface-700">
             <nav className="flex flex-col space-y-1">
-              <a href="/" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+              <Link to="/" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Dashboard
-              </a>
-              <a href="#orders" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+              </Link>
+              <Link to="#orders" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Orders
-              </a>
-              <a href="#tables" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+              </Link>
+              <Link to="#tables" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Tables
-              </a>
-              <a href="/inventory" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+              </Link>
+              <Link to="/inventory" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Inventory
-              </a>
-              <a href="/menu" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+              </Link>
+              <Link to="/menu" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Menu
-              </a>
+              </Link>
             </nav>
           </div>
         )}
