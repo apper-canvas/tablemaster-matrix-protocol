@@ -9,6 +9,6 @@ const store = configureStore({
     inventory: inventoryReducer,
   }, 
   devTools: true, // Enable Redux DevTools
+});
 
-export default store;
 export default store;
