@@ -3,7 +3,6 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { getIcon } from './utils/iconUtils';
-import Tables from './pages/Tables';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import MenuBuilder from './pages/MenuBuilder';
@@ -168,7 +167,6 @@ function App() {
             <Route path="*" element={<NotFound />} />
             <Route path="/menu" element={<MenuBuilder />} />
             <Route path="/inventory" element={<Inventory />} />
-            <Route path="/tables" element={<Tables />} />
           </Routes>
         </motion.div>
       </main>
