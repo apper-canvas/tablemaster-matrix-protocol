@@ -1097,39 +1097,41 @@ const Tables = () => {
         
         {/* Main Content Area - Shows different content based on the active tab */}
         
-        {/* Floor Plan Tab */}
-        {activeTab === 'floorplan' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Floor Plan */}
-            <div className="md:col-span-2 card p-6">
-              <TableFloorPlan 
-                tables={tables} 
-                sections={sections}
-                selectedTable={selectedTable}
-                onSelectTable={handleSelectTable}
-                isEditMode={isEditMode}
-              />
-            </div>
-            
-            {/* Table Details & Actions */}
-            <div className="card p-6">
-              <h3 className="text-lg font-semibold mb-4">
-                {selectedTable ? `Table ${selectedTable.number}` : 'Select a Table'}
-              </h3>
+        <div className="space-y-6">
+          {/* Floor Plan Tab */}
+          {activeTab === 'floorplan' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Floor Plan */}
+              <div className="md:col-span-2 card p-6">
+                <TableFloorPlan 
+                  tables={tables} 
+                  sections={sections}
+                  selectedTable={selectedTable}
+                  onSelectTable={handleSelectTable}
+                  isEditMode={isEditMode}
+                />
+              </div>
               
-              {selectedTable ? (
-                <div>
-                  {/* Table details */}
-                  <div className="bg-surface-100 dark:bg-surface-700 p-4 rounded-lg mb-4">
-                    <div className="flex justify-between mb-3">
-                      <div className="flex items-center">
-                        <div className={`w-3 h-3 rounded-full ${
-                          selectedTable.status === 'available' ? 'bg-green-500' :
-                          selectedTable.status === 'occupied' ? 'bg-red-500' :
-                          selectedTable.status === 'reserved' ? 'bg-blue-500' :
-                          'bg-yellow-500'
-                        } mr-2`}></div>
-                        <span className="capitalize">{selectedTable.status}</span>
+              {/* Table Details & Actions */}
+              <div className="card p-6">
+                <h3 className="text-lg font-semibold mb-4">
+                  {selectedTable ? `Table ${selectedTable.number}` : 'Select a Table'}
+                </h3>
+                
+                {selectedTable ? (
+                  <div>
+                    {/* Table details */}
+                    <div className="bg-surface-100 dark:bg-surface-700 p-4 rounded-lg mb-4">
+                      <div className="flex justify-between mb-3">
+                        <div className="flex items-center">
+                          <div className={`w-3 h-3 rounded-full ${
+                            selectedTable.status === 'available' ? 'bg-green-500' :
+                            selectedTable.status === 'occupied' ? 'bg-red-500' :
+                            selectedTable.status === 'reserved' ? 'bg-blue-500' :
+                            'bg-yellow-500'
+                          } mr-2`}></div>
+                          <span className="capitalize">{selectedTable.status}</span>
+                        </div>
                       </div>
                       
                       <div className="flex items-center">
@@ -1347,39 +1349,39 @@ const Tables = () => {
                   <p>Select a table to view details and take actions</p>
                 </div>
               )}
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Reservations Tab */}
-        {activeTab === 'reservations' && (
-          <ReservationManagement />
-        )}
-        
-        {/* Waitlist Tab - Placeholder for future implementation */}
-        {activeTab === 'waitlist' && (
-          <WaitlistManagement />
-        )}
-        
-        
-        {/* Analytics Tab - Placeholder for future implementation */}
-        {activeTab === 'analytics' && (
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold mb-4">Table Analytics</h3>
-            <p className="text-center py-8 text-surface-500">Analytics functionality coming soon</p>
-          </div>
-        )}
+          )}
+  
+          {/* Reservations Tab */}
+          {activeTab === 'reservations' && (
+            <ReservationManagement />
+          )}
+          
+          {/* Waitlist Tab */}
+          {activeTab === 'waitlist' && (
+            <WaitlistManagement />
+          )}
+          
+          {/* Analytics Tab */}
+          {activeTab === 'analytics' && (
+            <div className="card p-6">
+              <h3 className="text-lg font-semibold mb-4">Table Analytics</h3>
+              <p className="text-center py-8 text-surface-500">Analytics functionality coming soon</p>
+            </div>
+          )}
+        </div>
         
         {/* Add/Edit Reservation Modal */}
         {(isAddingReservation || isEditingReservation) && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-            <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md">
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4">
                 {isEditingReservation ? 'Edit Reservation' : 'New Reservation'}
               </h3>
               
               <form onSubmit={handleReservationSubmit}>
-                <div className="space-y-4">
+                <div className="space-y-4 mb-4">
                   <div>
                     <label htmlFor="customerName" className="label">Customer Name *</label>
                     <input
@@ -1515,9 +1517,9 @@ const Tables = () => {
         
         {/* Cancel Reservation Confirmation Dialog */}
         {showCancelDialog && selectedReservation && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md">
-              <div className="flex items-center mb-4 text-red-500">
+              <div className="flex items-center mb-6 text-red-500">
                 <AlertCircleIcon className="w-6 h-6 mr-2" />
                 <h3 className="text-lg font-semibold">Cancel Reservation</h3>
               </div>
@@ -1545,7 +1547,7 @@ const Tables = () => {
         {/* Add Table Modal */}
       {/* Add/Edit Waitlist Entry Modal */}
       {(isAddingToWaitlist || isEditingWaitlist) && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold mb-4">
               {isEditingWaitlist ? 'Edit Waitlist Entry' : 'Add to Waitlist'}
@@ -1634,9 +1636,9 @@ const Tables = () => {
       
       {/* Remove from Waitlist Confirmation Dialog */}
       {showRemoveWaitlistDialog && selectedWaitlistEntry && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md">
-            <div className="flex items-center mb-4 text-red-500">
+            <div className="flex items-center mb-6 text-red-500">
               <AlertCircleIcon className="w-6 h-6 mr-2" />
               <h3 className="text-lg font-semibold">
                 {removeReason === 'seated' ? 'Seat Customer' : 'Remove from Waitlist'}
@@ -1668,8 +1670,8 @@ const Tables = () => {
       )}
       
         {isAddingTable && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-            <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md">
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-surface-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4">Add New Table</h3>
               
               <div className="space-y-4">

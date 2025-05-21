@@ -175,7 +175,7 @@ const TableFloorPlan = ({ tables, sections, selectedTable, onSelectTable, isEdit
       <div 
         ref={(node) => { drop(node); floorPlanRef.current = node; }}
         className="flex-grow relative border border-surface-300 dark:border-surface-600 rounded-lg bg-surface-50 dark:bg-surface-800 overflow-hidden"
-        style={{ minHeight: '500px' }}
+        style={{ minHeight: '600px', height: 'calc(100vh - 250px)' }}
       >
         <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: '100%', height: '100%' }}>
           {tables.map(table => (
