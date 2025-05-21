@@ -1192,8 +1192,6 @@ const Tables = () => {
                     )}
                   </div>
                   
-                  </div>
-                ) : (
                     <div>
                       <h4 className="font-medium mb-3">Edit Table</h4>
                       <div className="space-y-3">
@@ -1346,7 +1344,7 @@ const Tables = () => {
                   )}
                 </div>
               ) : (
-                ) : (
+                <div className="card p-6">
                   <div className="text-center py-8 text-surface-500 dark:text-surface-400">
                     <p>Select a table to view details and take actions</p>
                   </div>
