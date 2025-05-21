@@ -1192,7 +1192,8 @@ const Tables = () => {
                       </>
                     )}
                     </div>
-
+                  </div>
+                  <div>
                   {selectedTable && (
                     <>
                       {isEditMode ? (
@@ -1297,8 +1298,10 @@ const Tables = () => {
                         <div>
                           <h4 className="font-medium mb-3">
                             {tableAction === 'seat' ? 'Seat Guests' :
-                            tableAction === 'reserve' ? 'Make Reservation' :
-                            tableAction === 'clear' ? 'Clear Table' :
+                             tableAction === 'reserve' ? 'Make Reservation' :
+                             tableAction === 'clear' ? 'Clear Table' :
+                             tableAction === 'finish-cleaning' ? 'Finish Cleaning' : 'Action'}
+                          </h4>
                             tableAction === 'finish-cleaning' ? 'Finish Cleaning' : 'Action'}
                           </h4>
                           <div className="flex justify-end space-x-2 mt-4">
@@ -1346,14 +1349,18 @@ const Tables = () => {
                     </>
                   )}
                 </>
+                  </div>
+                </>
+              ) : (
+                <div className="card p-6">
+                  <div className="text-center py-8 text-surface-500 dark:text-surface-400">
+                    <p>Select a table to view details and take actions</p>
+                  </div>
+                </div>
               )}
             </div>
           </div>
         )}
-            <div className="card p-6">
-              <div className="text-center py-8 text-surface-500 dark:text-surface-400">
-                <p>Select a table to view details and take actions</p>
-              </div>
             </div>
           )}
   
