@@ -1,8 +1,26 @@
 import { useState, useEffect } from 'react';
-import { DragDropContext, Droppable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable as LibDroppable } from 'react-beautiful-dnd';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getIcon } from '../utils/iconUtils';
+
+// Custom wrapper component to avoid defaultProps deprecation warning
+const DroppableWrapper = ({
+  droppableId,
+  type = 'DEFAULT',
+  direction = 'vertical',
+  ignoreContainerClipping = false,
+  isDropDisabled = false,
+  isCombineEnabled = false,
+  children,
+  ...props
+}) => {
+  return (
+    <LibDroppable droppableId={droppableId} type={type} direction={direction} ignoreContainerClipping={ignoreContainerClipping} isDropDisabled={isDropDisabled} isCombineEnabled={isCombineEnabled} {...props}>
+      {children}
+    </LibDroppable>
+  );
+};
 import MenuCategory from '../components/MenuCategory';
 import MenuItemForm from '../components/MenuItemForm';
 
@@ -435,7 +453,7 @@ const MenuBuilder = () => {
         </p>
         
         <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="all-categories" type="category">
+          <DroppableWrapper droppableId="all-categories" type="category">
             {(provided) => (
               <div
                 {...provided.droppableProps}
@@ -473,7 +491,7 @@ const MenuBuilder = () => {
                 {provided.placeholder}
               </div>
             )}
-          </Droppable>
+          </DroppableWrapper>
         </DragDropContext>
         
         {/* No categories message */}

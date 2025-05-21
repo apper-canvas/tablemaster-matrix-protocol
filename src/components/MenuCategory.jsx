@@ -1,8 +1,26 @@
 import { useState } from 'react';
-import { Draggable, Droppable } from 'react-beautiful-dnd';
+import { Draggable, Droppable as LibDroppable } from 'react-beautiful-dnd';
 import { motion } from 'framer-motion';
 import { getIcon } from '../utils/iconUtils';
 import MenuItem from './MenuItem';
+
+// Custom wrapper component to avoid defaultProps deprecation warning
+const DroppableWrapper = ({
+  droppableId,
+  type = 'DEFAULT',
+  direction = 'vertical',
+  ignoreContainerClipping = false,
+  isDropDisabled = false,
+  isCombineEnabled = false,
+  children,
+  ...props
+}) => {
+  return (
+    <LibDroppable droppableId={droppableId} type={type} direction={direction} ignoreContainerClipping={ignoreContainerClipping} isDropDisabled={isDropDisabled} isCombineEnabled={isCombineEnabled} {...props}>
+      {children}
+    </LibDroppable>
+  );
+};
 
 const MenuCategory = ({ 
   category, 
@@ -93,7 +111,7 @@ const MenuCategory = ({
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <Droppable droppableId={category.id} type="item">
+            <DroppableWrapper droppableId={category.id} type="item">
               {(provided) => (
                 <div 
                   ref={provided.innerRef}
@@ -106,7 +124,7 @@ const MenuCategory = ({
                   {provided.placeholder}
                 </div>
               )}
-            </Droppable>
+            </DroppableWrapper>
           </motion.div>
         </div>
       )}
