@@ -1192,7 +1192,7 @@ const Tables = () => {
                       </>
                     )}
                     </div>
-                  
+                  </div>
                 ) : (
                   <>
                   {isEditMode && selectedTable ? (
@@ -1293,72 +1293,69 @@ const Tables = () => {
                             </div>
                           </div>
                         </div>
-                  </div> 
+                  ) : !tableAction ? (
+                    <>
+                      {/* Table actions */}
+                      <div>
+                        <h4 className="font-medium mb-3">Actions</h4>
+                        <div className="space-y-2">
+                          {getAvailableActions(selectedTable).map(action => (
+                            <button
+                              key={action.id}
+                              onClick={() => handleTableAction(action.id)}
+                              className="btn btn-outline w-full flex items-center justify-center"
+                            >
+                              {getIcon(action.icon)({ className: "w-4 h-4 mr-2" })}
+                              {action.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
                   ) : (
-                ) : (
-                    {!tableAction ? (
-                      <>
-                        {/* Table actions */}
-                        <div>
-                          <h4 className="font-medium mb-3">Actions</h4>
-                          <div className="space-y-2">
-                            {getAvailableActions(selectedTable).map(action => (
-                              <button
-                                key={action.id}
-                                onClick={() => handleTableAction(action.id)}
-                                className="btn btn-outline w-full flex items-center justify-center"
-                              >
-                                {getIcon(action.icon)({ className: "w-4 h-4 mr-2" })}
-                                {action.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div>
-                          <h4 className="font-medium mb-3">
-                            {tableAction === 'seat' ? 'Seat Guests' :
-                             tableAction === 'reserve' ? 'Make Reservation' :
-                             tableAction === 'clear' ? 'Clear Table' :
-                             tableAction === 'finish-cleaning' ? 'Finish Cleaning' : 'Action'}
-                          </h4>
+                    <>
+                      <div>
+                        <h4 className="font-medium mb-3">
+                          {tableAction === 'seat' ? 'Seat Guests' :
+                           tableAction === 'reserve' ? 'Make Reservation' :
+                           tableAction === 'clear' ? 'Clear Table' :
+                           tableAction === 'finish-cleaning' ? 'Finish Cleaning' : 'Action'}
+                        </h4>
+                        
+                        <form onSubmit={handleActionSubmit}>
+                          {getFormContent()}
                           
-                          <form onSubmit={handleActionSubmit}>
-                            {getFormContent()}
-                            
-                            <div className="flex justify-end space-x-2 mt-4">
-                              <button
-                                type="button"
-                                onClick={() => setTableAction(null)}
-                                className="btn btn-outline"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                type="submit"
-                                className={`btn ${
-                                  tableAction === 'clear' 
-                                    ? 'bg-red-500 hover:bg-red-600 text-white' 
-                                    : 'btn-primary'
-                                }`}
-                              >
-                                Confirm
-                              </button>
-                              </div>
-                          </form>
-                        </div>
-                      </>
-                    )}
-                        )}
+                          <div className="flex justify-end space-x-2 mt-4">
+                            <button
+                              type="button"
+                              onClick={() => setTableAction(null)}
+                              className="btn btn-outline"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              className={`btn ${
+                                tableAction === 'clear' 
+                                  ? 'bg-red-500 hover:bg-red-600 text-white' 
+                                  : 'btn-primary'
+                              }`}
+                            >
+                              Confirm
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </>
                   )}
-                  </>
-                )}
-                }
-              </div>
+                </>
+              )}
             </div>
-          ) : (
+          </div>
+        </div>
+      )}
+          {activeTab !== 'floorplan' && (
+            <div className="card p-6">
             <div className="card p-6">
               <div className="text-center py-8 text-surface-500 dark:text-surface-400">
                 <p>Select a table to view details and take actions</p>
