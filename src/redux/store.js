@@ -5,8 +5,7 @@ import inventoryReducer from './slices/inventorySlice';
 const store = configureStore({
   reducer: {
     inventory: inventoryReducer,
-  },
-});
+  }, 
   devTools: true, // Enable Redux DevTools
 });
 
