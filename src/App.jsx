@@ -6,6 +6,7 @@ import { getIcon } from './utils/iconUtils';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import MenuBuilder from './pages/MenuBuilder';
+import Tables from './pages/Tables';
 import Inventory from './pages/Inventory';
 
 // Header component with dark mode toggle
@@ -166,6 +167,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="*" element={<NotFound />} />
             <Route path="/menu" element={<MenuBuilder />} />
+            <Route path="/tables" element={<Tables />} />
             <Route path="/inventory" element={<Inventory />} />
           </Routes>
         </motion.div>
