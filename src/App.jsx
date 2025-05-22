@@ -58,6 +58,9 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               <Link to="/reports" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Reports
               </Link>
+              <Link to="/staff" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+                Staff
+              </Link>
             </nav>
           </div>
           
@@ -104,6 +107,9 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               </Link>
               <Link to="/reports" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Reports
+              </Link>
+              <Link to="/staff" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+                Staff
               </Link>
             </nav>
           </div>
