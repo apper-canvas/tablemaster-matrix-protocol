@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable as LibDroppable } from 'react-beautiful-dnd';
-import { DragDropContext, Droppable as LibDroppable } from 'react-beautiful-dnd';
-
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-toastify';
 // Custom wrapper component with default parameters instead of defaultProps
 const DroppableWrapper = ({
   droppableId,
@@ -22,29 +22,7 @@ const DroppableWrapper = ({
     </LibDroppable>
   );
 };
-import { motion, AnimatePresence } from 'framer-motion';
 import { getIcon } from '../utils/iconUtils';
-
-// Custom wrapper component to avoid defaultProps deprecation warning
-const DroppableWrapper = ({
-  droppableId,
-  type = 'DEFAULT',
-  direction = 'vertical',
-  ignoreContainerClipping = false,
-  isDropDisabled = false,
-  isCombineEnabled = false,
-  children,
-  ...restProps
-}) => {
-  return (
-    <LibDroppable 
-      droppableId={droppableId}
-      type={type} direction={direction}
-      ignoreContainerClipping={ignoreContainerClipping} isDropDisabled={isDropDisabled} isCombineEnabled={isCombineEnabled} {...restProps}>
-      {children}
-    </LibDroppable>
-  );
-};
 import MenuCategory from '../components/MenuCategory';
 import MenuItemForm from '../components/MenuItemForm';
 
@@ -163,7 +141,7 @@ const MenuBuilder = () => {
         order: index
       }));
       
-          <DroppableWrapper droppableId="categories" type="category">
+      setMenuData({
         ...menuData,
         categories: updatedCategories
       });
@@ -187,7 +165,7 @@ const MenuBuilder = () => {
         newItems.splice(destination.index, 0, movedItem);
         
         // Update order property of all items
-          </DroppableWrapper>
+        const updatedItems = newItems.map((item, index) => ({
           ...item,
           order: index
         }));
@@ -240,7 +218,8 @@ const MenuBuilder = () => {
         };
         newCategories[destCategoryIndex] = {
           ...newCategories[destCategoryIndex],
-          <DroppableWrapper droppableId="deleted-items" type="item">
+          items: updatedDestItems
+          
         };
         
         setMenuData({
@@ -258,7 +237,7 @@ const MenuBuilder = () => {
   // Function to add a new category
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) {
-          </DroppableWrapper>
+      toast.error("Category name is required");
       return;
     }
     
