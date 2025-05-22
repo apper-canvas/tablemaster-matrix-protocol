@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DragDropContext, Droppable as LibDroppable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable as LibDroppable, Draggable } from 'react-beautiful-dnd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 // Custom wrapper component with default parameters instead of defaultProps
@@ -25,75 +25,10 @@ const DroppableWrapper = ({
 import { getIcon } from '../utils/iconUtils';
 import MenuCategory from '../components/MenuCategory';
 import MenuItemForm from '../components/MenuItemForm';
+import { fetchMenuItems, createMenuItem, updateMenuItem, deleteMenuItem } from '../services/menuItemService';
 
-// Demo data
 const initialMenuData = {
-  categories: [
-    {
-      id: 'appetizers',
-      name: 'Appetizers',
-      description: 'Start your meal off right',
-      order: 0,
-      items: [
-        {
-          id: 'app-1',
-          name: 'Loaded Nachos',
-          description: 'Crispy tortilla chips loaded with cheese, jalapeños, and sour cream',
-          price: 9.99,
-          allergens: ['dairy', 'gluten'],
-          isVegetarian: true,
-          cost: 3.50,
-          popularity: 'high',
-          image: null,
-          order: 0
-        },
-        {
-          id: 'app-2',
-          name: 'Chicken Wings',
-          description: 'Six crispy wings tossed in your choice of sauce',
-          price: 12.99,
-          allergens: [],
-          isVegetarian: false,
-          cost: 4.25,
-          popularity: 'high',
-          image: null,
-          order: 1
-        }
-      ]
-    },
-    {
-      id: 'entrees',
-      name: 'Main Courses',
-      description: 'Hearty and delicious mains',
-      order: 1,
-      items: [
-        {
-          id: 'ent-1',
-          name: 'Grilled Salmon',
-          description: 'Fresh salmon fillet grilled to perfection with lemon butter',
-          price: 21.99,
-          allergens: ['fish'],
-          isVegetarian: false,
-          cost: 8.75,
-          popularity: 'medium',
-          image: null,
-          order: 0
-        },
-        {
-          id: 'ent-2',
-          name: 'Pasta Primavera',
-          description: 'Fettuccine with seasonal vegetables in a light cream sauce',
-          price: 15.99,
-          allergens: ['dairy', 'gluten'],
-          isVegetarian: true,
-          cost: 4.50,
-          popularity: 'medium',
-          image: null,
-          order: 1
-        }
-      ]
-    }
-  ]
+  categories: []
 };
 
 const MenuBuilder = () => {
@@ -106,6 +41,9 @@ const MenuBuilder = () => {
   const [isEditingItem, setIsEditingItem] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  
+  // Loading states
+  const [isLoading, setIsLoading] = useState(false);
 
   // Icons
   const PlusIcon = getIcon('plus');
@@ -117,6 +55,20 @@ const MenuBuilder = () => {
   const MenuIcon = getIcon('menu');
   const DollarSignIcon = getIcon('dollar-sign');
   const TagIcon = getIcon('tag');
+  const LoaderIcon = getIcon('loader');
+  
+  // Load menu data from database on component mount
+  useEffect(() => {
+    const loadMenuData = async () => {
+      try {
+        const data = await fetchMenuItems(setIsLoading);
+        setMenuData(data);
+      } catch (error) {
+        console.error("Failed to load menu data:", error);
+      }
+    };
+    loadMenuData();
+  }, []);
 
   // Function to handle drag and drop
   const handleDragEnd = (result) => {
@@ -146,7 +98,7 @@ const MenuBuilder = () => {
         categories: updatedCategories
       });
       
-      toast.success(`Moved "${movedCategory.name}" category`);
+      toast.success(`Reordered "${movedCategory.name}" category`);
       return;
     }
 
@@ -244,23 +196,35 @@ const MenuBuilder = () => {
     // Create a new category with a unique ID
     const newCategory = {
       id: `category-${Date.now()}`,
-      name: newCategoryName,
+      name: newCategoryName.trim(),
       description: newCategoryDescription,
       order: menuData.categories.length,
       items: []
     };
     
-    setMenuData({
-      ...menuData,
-      categories: [...menuData.categories, newCategory]
-    });
-    
-    // Reset form
-    setNewCategoryName('');
-    setNewCategoryDescription('');
-    setIsAddingCategory(false);
-    
-    toast.success(`Added new category: ${newCategory.name}`);
+    try {
+      // In a real implementation, we would save the category to the database
+      // Since there's no direct category table, we're adding it to the UI
+      // Categories are derived from menu items' category field
+      setMenuData({
+        ...menuData,
+        categories: [...menuData.categories, newCategory]
+      });
+      
+      // Reset form
+      setNewCategoryName('');
+      setNewCategoryDescription('');
+      setIsAddingCategory(false);
+      
+      toast.success(`Added new category: ${newCategory.name}`);
+      
+      // Note: In a full implementation, we would create this as a record
+      // in a categories table, but we're using the menu_item.category field
+      // to derive categories
+    } catch (error) {
+      console.error("Error adding category:", error);
+      toast.error("Failed to add category. Please try again.");
+    }
   };
   
   // Function to update a category
@@ -270,21 +234,33 @@ const MenuBuilder = () => {
       return;
     }
     
-    const updatedCategories = menuData.categories.map(category => {
-      if (category.id === isEditingCategory) {
-        return {
-          ...category,
-          name: newCategoryName,
-          description: newCategoryDescription
-        };
-      }
-      return category;
-    });
-    
-    setMenuData({
-      ...menuData,
-      categories: updatedCategories
-    });
+    try {
+      // Find the category to update
+      const categoryIndex = menuData.categories.findIndex(cat => cat.id === isEditingCategory);
+      if (categoryIndex === -1) return;
+      
+      const oldCategoryName = menuData.categories[categoryIndex].name;
+      
+      // Update the category in the UI
+      const updatedCategories = menuData.categories.map(category => {
+        if (category.id === isEditingCategory) {
+          return {
+            ...category,
+            name: newCategoryName.trim(),
+            description: newCategoryDescription
+          };
+        }
+        return category;
+      });
+      
+      setMenuData({
+        ...menuData,
+        categories: updatedCategories
+      });
+    } catch (error) {
+      console.error("Error updating category:", error);
+      toast.error("Failed to update category. Please try again.");
+    }
     
     // Reset form
     setNewCategoryName('');
@@ -331,64 +307,104 @@ const MenuBuilder = () => {
   };
   
   // Function to add a new menu item
-  const handleAddItem = (categoryId, itemData) => {
-    const newItem = {
-      id: `item-${Date.now()}`,
-      ...itemData,
-      order: menuData.categories.find(cat => cat.id === categoryId)?.items.length || 0
-    };
-    
-    const updatedCategories = menuData.categories.map(category => {
-      if (category.id === categoryId) {
-        return {
-          ...category,
-          items: [...category.items, newItem]
-        };
-      }
-      return category;
-    });
-    
-    setMenuData({
-      ...menuData,
-      categories: updatedCategories
-    });
-    
-    setIsAddingItem(false);
-    setSelectedCategory(null);
-    
-    toast.success(`Added new item: ${newItem.name}`);
+  const handleAddItem = async (categoryId, itemData) => {
+    try {
+      setIsLoading(true);
+      
+      // Find the category
+      const category = menuData.categories.find(cat => cat.id === categoryId);
+      if (!category) throw new Error("Category not found");
+      
+      // Prepare data for API
+      const apiData = {
+        ...itemData,
+        category: category.name,
+      };
+      
+      // Create the item in the database
+      const createdItem = await createMenuItem(apiData);
+      
+      // Update local state with the new item
+      const newItem = {
+        id: createdItem.Id,
+        name: createdItem.Name,
+        price: Number(createdItem.price) || 0,
+        description: createdItem.description || '',
+        cost: Number(createdItem.cost) || 0,
+        isVegetarian: Boolean(createdItem.isVegetarian),
+        allergens: createdItem.allergens ? createdItem.allergens.split(',') : [],
+        popularity: createdItem.popularity || 'medium',
+        order: category.items.length
+      };
+      
+      // Update UI
+      const updatedCategories = menuData.categories.map(cat => 
+        cat.id === categoryId ? { ...cat, items: [...cat.items, newItem] } : cat
+      );
+      
+      setMenuData({ ...menuData, categories: updatedCategories });
+      setIsAddingItem(false);
+      setSelectedCategory(null);
+    } catch (error) {
+      console.error("Error adding menu item:", error);
+      toast.error("Failed to add menu item. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   // Function to update a menu item
-  const handleUpdateItem = (categoryId, itemId, itemData) => {
-    const updatedCategories = menuData.categories.map(category => {
-      if (category.id === categoryId) {
-        const updatedItems = category.items.map(item => {
-          if (item.id === itemId) {
-            return {
-              ...item,
-              ...itemData
-            };
-          }
-          return item;
-        });
-        
-        return {
-          ...category,
-          items: updatedItems
-        };
-      }
-      return category;
-    });
-    
-    setMenuData({
-      ...menuData,
-      categories: updatedCategories
-    });
-    
-    setIsEditingItem(null);
-    
-    toast.success(`Updated item: ${itemData.name}`);
+  const handleUpdateItem = async (categoryId, itemId, itemData) => {
+    try {
+      setIsLoading(true);
+      
+      // Find the category
+      const category = menuData.categories.find(cat => cat.id === categoryId);
+      if (!category) throw new Error("Category not found");
+      
+      // Prepare data for API
+      const apiData = {
+        ...itemData,
+        category: category.name,
+      };
+      
+      // Update in database
+      await updateMenuItem(itemId, apiData);
+      
+      // Update local state
+      const updatedCategories = menuData.categories.map(category => {
+        if (category.id === categoryId) {
+          const updatedItems = category.items.map(item => {
+            if (item.id === itemId) {
+              return {
+                ...item,
+                ...itemData
+              };
+            }
+            return item;
+          });
+          
+          return {
+            ...category,
+            items: updatedItems
+          };
+        }
+        return category;
+      });
+      
+      setMenuData({
+        ...menuData,
+        categories: updatedCategories
+      });
+      
+      setIsEditingItem(null);
+      toast.success(`Updated item: ${itemData.name}`);
+    } catch (error) {
+      console.error("Error updating menu item:", error);
+      toast.error("Failed to update menu item. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   // Function to delete a menu item
@@ -406,30 +422,47 @@ const MenuBuilder = () => {
   };
   
   // Function to actually delete the item after confirmation
-  const deleteItem = (categoryId, itemId) => {
-    const categoryIndex = menuData.categories.findIndex(cat => cat.id === categoryId);
-    const itemToDelete = menuData.categories[categoryIndex].items.find(item => item.id === itemId);
-    
-    const updatedItems = menuData.categories[categoryIndex].items
-      .filter(item => item.id !== itemId)
-      .map((item, index) => ({
-        ...item,
-        order: index
-      }));
-    
-    const updatedCategories = [...menuData.categories];
-    updatedCategories[categoryIndex] = {
-      ...updatedCategories[categoryIndex],
-      items: updatedItems
-    };
-    
-    setMenuData({
-      ...menuData,
-      categories: updatedCategories
-    });
-    
-    setConfirmDelete(null);
-    toast.success(`Deleted item: ${itemToDelete.name}`);
+  const deleteItem = async (categoryId, itemId) => {
+    try {
+      setIsLoading(true);
+      
+      // Find the category and item
+      const categoryIndex = menuData.categories.findIndex(cat => cat.id === categoryId);
+      if (categoryIndex === -1) throw new Error("Category not found");
+      
+      const itemToDelete = menuData.categories[categoryIndex].items.find(item => item.id === itemId);
+      if (!itemToDelete) throw new Error("Item not found");
+      
+      // Delete from database
+      await deleteMenuItem(itemId);
+      
+      // Update local state
+      const updatedItems = menuData.categories[categoryIndex].items
+        .filter(item => item.id !== itemId)
+        .map((item, index) => ({
+          ...item,
+          order: index
+        }));
+      
+      const updatedCategories = [...menuData.categories];
+      updatedCategories[categoryIndex] = {
+        ...updatedCategories[categoryIndex],
+        items: updatedItems
+      };
+      
+      setMenuData({
+        ...menuData,
+        categories: updatedCategories
+      });
+      
+      toast.success(`Deleted item: ${itemToDelete.name}`);
+    } catch (error) {
+      console.error("Error deleting menu item:", error);
+      toast.error("Failed to delete menu item. Please try again.");
+    } finally {
+      setIsLoading(false);
+      setConfirmDelete(null);
+    }
   };
 
   return (
@@ -438,6 +471,249 @@ const MenuBuilder = () => {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Menu Builder</h1>
           <button
+            disabled={isLoading}
+            onClick={() => {
+              setIsAddingCategory(true);
+              setIsEditingCategory(null);
+              setNewCategoryName('');
+              setNewCategoryDescription('');
+            }}
+            className="btn btn-primary flex items-center"
+          >
+            <PlusIcon className="w-4 h-4 mr-2" />
+            Add Category
+          </button>
+        </div>
+        
+        <p className="text-surface-600 dark:text-surface-400 mb-8">
+          Drag and drop menu categories and items to reorder them. Click on items to edit details.
+        </p>
+        
+        {isLoading && (
+          <div className="flex justify-center items-center my-8">
+            <LoaderIcon className="w-8 h-8 animate-spin text-primary" />
+            <span className="ml-2 text-surface-600 dark:text-surface-400">Loading menu data...</span>
+          </div>
+        )}
+        
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <DroppableWrapper droppableId="all-categories" type="category">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-6"
+              >
+                {menuData.categories.map((category, index) => (
+                  <MenuCategory
+                    key={category.id}
+                    category={category}
+                    index={index}
+                    onAddItem={() => {
+                      setIsAddingItem(true);
+                      setSelectedCategory(category.id);
+                      setIsEditingItem(null);
+                    }}
+                    onEditCategory={(id) => {
+                      const categoryToEdit = menuData.categories.find(cat => cat.id === id);
+                      setIsEditingCategory(id);
+                      setNewCategoryName(categoryToEdit.name);
+                      setNewCategoryDescription(categoryToEdit.description || '');
+                      setIsAddingCategory(false);
+                    }}
+                    onDeleteCategory={() => handleDeleteCategory(category.id)}
+                    onEditItem={(itemId) => {
+                      setIsEditingItem({
+                        categoryId: category.id,
+                        itemId: itemId
+                      });
+                      setIsAddingItem(false);
+                    }}
+                    onDeleteItem={(itemId) => handleDeleteItem(category.id, itemId)}
+                  />
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </DroppableWrapper>
+        </DragDropContext>
+        
+        {/* No categories message */}
+        {!isLoading && menuData.categories.length === 0 && (
+          <div className="card p-12 text-center">
+            <MenuIcon className="w-12 h-12 mx-auto mb-4 text-surface-400 dark:text-surface-600" />
+            <h3 className="text-xl font-medium mb-2">No Menu Categories Yet</h3>
+            <p className="text-surface-600 dark:text-surface-400 mb-6">
+              Create your first category to start building your menu
+            </p>
+            <button
+              disabled={isLoading}
+              onClick={() => {
+                setIsAddingCategory(true);
+                setNewCategoryName('');
+                setNewCategoryDescription('');
+              }}
+              className="btn btn-primary inline-flex items-center"
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              Add First Category
+            </button>
+          </div>
+        )}
+        
+        {/* Category Form Modal */}
+        {isAddingCategory || isEditingCategory ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white dark:bg-surface-800 rounded-xl shadow-xl p-6 max-w-md w-full">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">
+                  {isEditingCategory ? "Edit Category" : "Add New Category"}
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsAddingCategory(false);
+                    setIsEditingCategory(null);
+                  }}
+                  className="p-1 rounded-full hover:bg-surface-200 dark:hover:bg-surface-700"
+                >
+                  <CloseIcon className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="mb-4">
+                <label htmlFor="categoryName" className="label">Category Name *</label>
+                <input
+                  type="text"
+                  id="categoryName"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="input"
+                  placeholder="e.g., Appetizers, Main Courses, Desserts"
+                  required
+                />
+              </div>
+              
+              <div className="mb-6">
+                <label htmlFor="categoryDescription" className="label">Description (optional)</label>
+                <textarea
+                  id="categoryDescription"
+                  value={newCategoryDescription}
+                  onChange={(e) => setNewCategoryDescription(e.target.value)}
+                  className="input"
+                  rows="3"
+                  placeholder="Brief description of this menu category"
+                ></textarea>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingCategory(false);
+                    setIsEditingCategory(null);
+                  }}
+                  className="btn btn-outline"
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={isEditingCategory ? handleUpdateCategory : handleAddCategory}
+                  className="btn btn-primary flex items-center"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <SaveIcon className="w-4 h-4 mr-2" />
+                  )}
+                  {isEditingCategory ? "Update Category" : "Add Category"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        
+        {/* Item Form Modal */}
+        {isAddingItem || isEditingItem ? (
+          <MenuItemForm
+            onClose={() => {
+              setIsAddingItem(false);
+              setIsEditingItem(null);
+            }}
+            onSubmit={(itemData) => {
+              if (isEditingItem) {
+                handleUpdateItem(
+                  isEditingItem.categoryId,
+                  isEditingItem.itemId,
+                  itemData
+                );
+              } else if (isAddingItem && selectedCategory) {
+                handleAddItem(selectedCategory, itemData);
+              }
+            }}
+            item={isEditingItem ? menuData.categories
+              .find(cat => cat.id === isEditingItem.categoryId)
+              ?.items.find(item => item.id === isEditingItem.itemId) : null}
+            isEditing={!!isEditingItem}
+            isLoading={isLoading}
+          />
+        ) : null}
+        
+        {/* Confirmation Dialog */}
+        {confirmDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white dark:bg-surface-800 rounded-xl shadow-xl p-6 max-w-md w-full">
+              <div className="flex items-start mb-4">
+                <div className="mr-3 flex-shrink-0">
+                  <AlertIcon className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Confirm Deletion</h3>
+                  <p className="text-surface-600 dark:text-surface-400">
+                    {confirmDelete.message}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(null)}
+                  className="btn btn-outline"
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirmDelete.type === 'category') {
+                      deleteCategory(confirmDelete.id);
+                    } else if (confirmDelete.type === 'item') {
+                      deleteItem(confirmDelete.categoryId, confirmDelete.id);
+                    }
+                  }}
+                  className="btn bg-red-500 hover:bg-red-600 text-white"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <>Delete {confirmDelete.type === 'category' ? 'Category' : 'Item'}</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MenuBuilder;
             onClick={() => {
               setIsAddingCategory(true);
               setIsEditingCategory(null);
