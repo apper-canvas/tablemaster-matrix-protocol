@@ -8,6 +8,7 @@ import NotFound from './pages/NotFound';
 import MenuBuilder from './pages/MenuBuilder';
 import Tables from './pages/Tables';
 import Inventory from './pages/Inventory';
+import Orders from './pages/Orders';
 
 // Header component with dark mode toggle
 const Header = ({ darkMode, toggleDarkMode }) => {
@@ -35,7 +36,7 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               <Link to="/" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Dashboard
               </Link>
-              <Link to="#orders" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+              <Link to="/orders" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Orders
               </Link>
               <Link to="/tables" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
@@ -79,7 +80,7 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               <Link to="/" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Dashboard
               </Link>
-              <Link to="#orders" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+              <Link to="/orders" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Orders
               </Link>
               <Link to="/tables" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
@@ -168,6 +169,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
             <Route path="/menu" element={<MenuBuilder />} />
             <Route path="/tables" element={<Tables />} />
+            <Route path="/orders" element={<Orders />} />
             <Route path="/inventory" element={<Inventory />} />
           </Routes>
         </motion.div>
