@@ -5,18 +5,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getIcon } from '../utils/iconUtils';
 
 // Custom wrapper component to avoid defaultProps deprecation warning
-const DroppableWrapper = ({
-  droppableId,
-  type = 'DEFAULT',
-  direction = 'vertical',
-  ignoreContainerClipping = false,
-  isDropDisabled = false,
-  isCombineEnabled = false,
-  children,
-  ...props
-}) => {
+const DroppableWrapper = (props) => {
+  const {
+    droppableId,
+    type = 'DEFAULT',
+    direction = 'vertical',
+    ignoreContainerClipping = false,
+    isDropDisabled = false,
+    isCombineEnabled = false,
+    children,
+    ...restProps
+  } = props;
+  
   return (
-    <LibDroppable droppableId={droppableId} type={type} direction={direction} ignoreContainerClipping={ignoreContainerClipping} isDropDisabled={isDropDisabled} isCombineEnabled={isCombineEnabled} {...props}>
+    <LibDroppable 
+      droppableId={droppableId} type={type} direction={direction} ignoreContainerClipping={ignoreContainerClipping} isDropDisabled={isDropDisabled} isCombineEnabled={isCombineEnabled} {...restProps}>
       {children}
     </LibDroppable>
   );
