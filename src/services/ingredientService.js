@@ -62,16 +62,19 @@ export const fetchIngredients = async () => {
 export const createIngredient = async (ingredientData) => {
   try {
     const apperClient = getApperClient();
-    
-    // Filter to only include updateable fields
+
+    // Filter to only include updateable fields and exclude empty strings
     const filteredData = Object.keys(ingredientData)
       .filter(key => updateableFields.includes(key))
+      // Exclude empty strings from the payload
+      .filter(key => ingredientData[key] !== '')
       .reduce((obj, key) => {
         obj[key] = ingredientData[key];
         return obj;
       }, {});
-      
+
     const params = {
+      // Always send as an array for bulk operations
       records: [filteredData]
     };
     
@@ -95,15 +98,17 @@ export const createIngredient = async (ingredientData) => {
 export const updateIngredient = async (ingredientData) => {
   try {
     const apperClient = getApperClient();
-    
-    // Filter to only include updateable fields plus Id
+
+    // Filter to only include updateable fields plus Id and exclude empty strings
     const filteredData = Object.keys(ingredientData)
       .filter(key => key === 'Id' || updateableFields.includes(key))
+      // Keep Id field even if empty (which shouldn't happen) but exclude other empty strings
+      .filter(key => key === 'Id' || ingredientData[key] !== '')
       .reduce((obj, key) => {
         obj[key] = ingredientData[key];
         return obj;
       }, {});
-      
+
     const params = {
       records: [filteredData]
     };
@@ -147,14 +152,16 @@ export const logWaste = async (wasteData) => {
   try {
     const apperClient = getApperClient();
     
-    // Filter to only include updateable fields
+    // Filter to only include updateable fields and exclude empty strings
     const filteredData = Object.keys(wasteData)
       .filter(key => wasteLogUpdateableFields.includes(key))
+      // Exclude empty strings from the payload
+      .filter(key => wasteData[key] !== '')
       .reduce((obj, key) => {
         obj[key] = wasteData[key];
         return obj;
       }, {});
-      
+
     // Set current date if not provided
     if (!filteredData.date) {
       filteredData.date = new Date().toISOString().split('T')[0];
