@@ -24,7 +24,6 @@ const Header = ({ darkMode, toggleDarkMode }) => {
   const MenuIcon = getIcon('menu');
   const MoonIcon = getIcon('moon');
   const SunIcon = getIcon('sun');
-  { path: '/waitlist', element: <Waitlist />, name: 'Waitlist', icon: 'users' },
   const RestaurantIcon = getIcon('utensils');
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);  
