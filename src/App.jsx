@@ -9,6 +9,7 @@ import MenuBuilder from './pages/MenuBuilder';
 import Tables from './pages/Tables';
 import Inventory from './pages/Inventory';
 import Orders from './pages/Orders';
+import Reports from './pages/Reports';
 
 // Header component with dark mode toggle
 const Header = ({ darkMode, toggleDarkMode }) => {
@@ -47,6 +48,9 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               </Link>
               <Link to="/menu" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Menu
+              </Link>
+              <Link to="/reports" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
+                Reports
               </Link>
             </nav>
           </div>
@@ -91,6 +95,9 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               </Link>
               <Link to="/menu" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Menu
+              </Link>
+              <Link to="/reports" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
+                Reports
               </Link>
             </nav>
           </div>
@@ -171,6 +178,7 @@ function App() {
             <Route path="/tables" element={<Tables />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/inventory" element={<Inventory />} />
+            <Route path="/reports" element={<Reports />} />
           </Routes>
         </motion.div>
       </main>
