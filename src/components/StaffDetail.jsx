@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getStaffMemberById } from '../services/staffService';
+import { fetchStaffMemberById } from '../services/staffService';
 import { getIcon } from '../utils/iconUtils';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
@@ -27,7 +27,7 @@ const StaffDetail = ({ staffId, onClose, onEdit }) => {
       }
 
       try {
-        const data = await getStaffMemberById(staffId);
+        const data = await fetchStaffMemberById(staffId);
         setStaffData(data);
       } catch (err) {
         console.error('Error fetching staff data:', err);
