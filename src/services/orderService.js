@@ -110,6 +110,8 @@ export const fetchOrderItems = async (orderId) => {
  * Create a new order with items
  */
 export const createOrder = async (orderData) => {
+  console.log("Creating order with data:", orderData);
+
   try {
     const apperClient = getApperClient();
     
@@ -164,6 +166,141 @@ export const createOrder = async (orderData) => {
   } catch (error) {
     console.error("Error creating order:", error);
     toast.error("Failed to create order. Please try again.");
+    throw error;
+  }
+};
+
+/**
+ * Update an existing order
+ */
+export const updateOrder = async (orderData) => {
+  try {
+    const apperClient = getApperClient();
+    
+    // First, update the order
+    const orderParams = {
+      records: [
+        {
+          Id: orderData.id,
+          Name: orderData.tableName,
+          table: orderData.tableId,
+          tableName: orderData.tableName,
+          customerName: orderData.customerName,
+          status: orderData.status,
+          paymentStatus: orderData.paymentStatus,
+          specialInstructions: orderData.specialInstructions,
+          totalAmount: orderData.totalAmount
+        }
+      ]
+    };
+    
+    const orderResponse = await apperClient.updateRecord('order1', orderParams);
+    
+    if (!orderResponse || !orderResponse.success) {
+      throw new Error("Failed to update order");
+    }
+    
+    // We need to handle the order items:
+    // First, fetch existing items to determine what to delete/update
+    const existingItems = await fetchOrderItems(orderData.id);
+    const existingItemIds = existingItems.map(item => item.id);
+    const newItemIds = orderData.items.filter(item => item.id).map(item => item.id);
+    
+    // Items to delete (exist in DB but not in updated order)
+    const itemsToDelete = existingItemIds.filter(id => !newItemIds.includes(id));
+    
+    // Delete items that were removed
+    if (itemsToDelete.length > 0) {
+      const deleteParams = {
+        RecordIds: itemsToDelete
+      };
+      await apperClient.deleteRecord('order_item1', deleteParams);
+    }
+    
+    // Update or create items
+    const itemPromises = orderData.items.map(item => {
+      if (item.id && existingItemIds.includes(item.id)) {
+        // Update existing item
+        const updateParams = {
+          records: [
+            {
+              Id: item.id,
+              Name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              notes: item.notes || ''
+            }
+          ]
+        };
+        return apperClient.updateRecord('order_item1', updateParams);
+      } else {
+        // Create new item
+        const createParams = {
+          records: [
+            {
+              order: orderData.id,
+              Name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              notes: item.notes || ''
+            }
+          ]
+        };
+        return apperClient.createRecord('order_item1', createParams);
+      }
+    });
+    
+    await Promise.all(itemPromises);
+    
+    return {
+      ...orderData
+    };
+  } catch (error) {
+    console.error("Error updating order:", error);
+    toast.error("Failed to update order. Please try again.");
+    throw error;
+  }
+};
+
+/**
+ * Update the status of an order
+ */
+export const updateOrderStatus = async (orderId, status) => {
+  try {
+    const apperClient = getApperClient();
+    
+    const params = {
+      records: [
+        {
+          Id: orderId,
+          status: status
+        }
+      ]
+    };
+    
+    const response = await apperClient.updateRecord('order1', params);
+    return response.success;
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    toast.error("Failed to update order status. Please try again.");
+    throw error;
+  }
+};
+
+/**
+ * Delete an order and its items
+ */
+export const deleteOrder = async (orderId) => {
+  try {
+    const apperClient = getApperClient();
+    
+    // Delete the order (cascade deletion should handle the items)
+    const params = { RecordIds: [orderId] };
+    const response = await apperClient.deleteRecord('order1', params);
+    return response.success;
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    toast.error("Failed to delete order. Please try again.");
     throw error;
   }
 };

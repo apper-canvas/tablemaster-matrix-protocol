@@ -2,17 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { format, formatDistance } from 'date-fns';
-import { toast } from 'react-toastify';
+import { toast } from 'react-toastify'; 
 import { getIcon } from '../utils/iconUtils';
-import { 
-  createOrder, 
-  updateOrder, 
-  updateOrderStatus, 
-  updatePaymentStatus, 
-  deleteOrder,
-  ORDER_STATUS,
-  PAYMENT_STATUS
-} from '../redux/slices/ordersSlice';
+import * as orderService from '../services/orderService';
+import { ORDER_STATUS, PAYMENT_STATUS } from '../redux/slices/ordersSlice';
+
 
 // Get all the icons we'll need
 const PlusIcon = getIcon('plus');
@@ -251,8 +245,11 @@ const OrderItem = ({ item, onUpdate, onRemove, index }) => {
 // Main Orders component
 const Orders = () => {
   const dispatch = useDispatch();
-  const { orders } = useSelector((state) => state.orders);
-  
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingOperation, setLoadingOperation] = useState(false);
+  const [error, setError] = useState(null);
+
   // State for active tab
   const [activeTab, setActiveTab] = useState('active');
   
@@ -306,6 +303,27 @@ const Orders = () => {
     { id: 'table-6', name: 'Table 6' },
   ];
   
+  // Fetch orders from the database
+  useEffect(() => {
+    const loadOrders = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const fetchedOrders = await orderService.fetchOrders();
+        setOrders(fetchedOrders);
+      } catch (err) {
+        console.error("Failed to load orders:", err);
+        setError("Failed to load orders. Please try again.");
+        toast.error("Error loading orders");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrders();
+  }, []);
+
+
   // Filter and sort orders based on current filters
   const filteredOrders = useMemo(() => {
     let result = [...orders];
@@ -443,15 +461,28 @@ const Orders = () => {
   
   // Submit new order
   const handleSubmitNewOrder = () => {
+    setLoadingOperation(true);
+
     // Validate form
     if (!orderForm.tableId || !orderForm.customerName || orderForm.items.length === 0) {
       toast.error('Please complete all required fields');
+      setLoadingOperation(false);
       return;
     }
     
-    dispatch(createOrder(orderForm));
-    toast.success('Order created successfully');
-    setIsNewOrderModalOpen(false);
+    orderService.createOrder(orderForm)
+      .then(newOrder => {
+        // Add the new order to the state
+        setOrders(prevOrders => [...prevOrders, newOrder]);
+        toast.success('Order created successfully');
+        setIsNewOrderModalOpen(false);
+      })
+      .catch(error => {
+        console.error('Error creating order:', error);
+        toast.error('Failed to create order');
+      })
+      .finally(() => setLoadingOperation(false));
+      
     resetOrderForm();
   };
   
@@ -459,17 +490,32 @@ const Orders = () => {
   const handleSubmitEditOrder = () => {
     // Validate form
     if (!orderForm.tableId || !orderForm.customerName || orderForm.items.length === 0) {
-      toast.error('Please complete all required fields');
+      toast.error('Please complete all required fields'); 
+      setLoadingOperation(false);
       return;
     }
-    
-    dispatch(updateOrder({
-      id: currentOrder.id,
-      ...orderForm
-    }));
-    toast.success('Order updated successfully');
-    setIsEditOrderModalOpen(false);
-    setCurrentOrder(null);
+
+    setLoadingOperation(true);
+
+    const updatedOrderData = {
+        id: currentOrder.id,
+        ...orderForm
+    };
+
+    orderService.updateOrder(updatedOrderData)
+      .then(() => {
+        // Update the order in the state
+        setOrders(prevOrders => prevOrders.map(order => 
+          order.id === currentOrder.id ? updatedOrderData : order
+        ));
+        toast.success('Order updated successfully');
+        setIsEditOrderModalOpen(false);
+        setCurrentOrder(null);
+      })
+      .catch(error => {
+        toast.error('Failed to update order');
+      })
+      .finally(() => setLoadingOperation(false));
   };
   
   // Delete order
@@ -482,7 +528,19 @@ const Orders = () => {
   
   // Update order status
   const handleStatusUpdate = (orderId, newStatus) => {
-    dispatch(updateOrderStatus({ id: orderId, status: newStatus }));
+    setLoadingOperation(true);
+
+    orderService.updateOrderStatus(orderId, newStatus)
+      .then(success => {
+        if (success) {
+          // Update the order in the state
+          setOrders(prevOrders => prevOrders.map(order => 
+            order.id === orderId ? { ...order, status: newStatus } : order
+          ));
+        }
+      })
+      .catch(error => {})
+      .finally(() => setLoadingOperation(false));
     
     const statusMessages = {
       [ORDER_STATUS.IN_PROGRESS]: 'Order is now being prepared',
@@ -559,6 +617,14 @@ const Orders = () => {
   };
   
   return (
+    <>
+    {loading && (
+      <div className="flex justify-center items-center h-40">
+        <div className="spinner border-4 border-surface-300 border-t-primary rounded-full w-12 h-12 animate-spin"></div>
+        <span className="ml-3 text-lg">Loading orders...</span>
+      </div>
+    )}
+    
     <div className="app-container py-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
@@ -901,11 +967,16 @@ const Orders = () => {
                 </button>
                 <button 
                   className="btn btn-primary"
+                  disabled={loadingOperation}
                   onClick={handleSubmitNewOrder}
                 >
-                  Create Order
+                  {loadingOperation ? (
+                    <span>Creating...</span>
+                  ) : (
+                    <span>Create Order</span>
+                  )}
                 </button>
-              </div>
+              </div> 
             </div>
           </div>
         </div>
@@ -1111,7 +1182,8 @@ const Orders = () => {
         </div>
       )}
     </div>
-  );
+    </>
+  ); 
 };
 
 export default Orders;
