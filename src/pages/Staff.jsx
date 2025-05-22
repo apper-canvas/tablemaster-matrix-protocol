@@ -12,7 +12,14 @@ const Staff = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
+  const [filters, setFilters] = useState({
+    roles: [],
+    minRating: '',
+    maxRating: '',
+    minOrders: '',
+    maxOrders: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingStaffId, setEditingStaffId] = useState(null);
   const [viewingStaffId, setViewingStaffId] = useState(null);
@@ -36,6 +43,7 @@ const Staff = () => {
   const HostIcon = getIcon('doorOpen');
   const BartenderIcon = getIcon('wineGlass');
   const RefreshIcon = getIcon('refreshCw');
+  const ChevronDownIcon = getIcon('chevronDown');
   const StarIcon = getIcon('star');
   const CloseIcon = getIcon('x');
 
@@ -45,11 +53,28 @@ const Staff = () => {
     
     try {
       const filters = {};
+      
       if (searchTerm) {
         filters.searchTerm = searchTerm;
       }
-      if (roleFilter) {
-        filters.role = roleFilter;
+      
+      // Handle multiple role filters
+      if (this.filters.roles && this.filters.roles.length > 0) {
+        filters.roles = this.filters.roles;
+      }
+      
+      // Add numeric range filters
+      if (this.filters.minRating) {
+        filters.minRating = parseFloat(this.filters.minRating);
+      }
+      if (this.filters.maxRating) {
+        filters.maxRating = parseFloat(this.filters.maxRating);
+      }
+      if (this.filters.minOrders) {
+        filters.minOrders = parseInt(this.filters.minOrders);
+      }
+      if (this.filters.maxOrders) {
+        filters.maxOrders = parseInt(this.filters.maxOrders);
       }
       
       const data = await fetchStaffMembers(filters);
@@ -92,7 +117,7 @@ const Staff = () => {
 
   useEffect(() => {
     loadStaffMembers();
-  }, [roleFilter]); // Reload when role filter changes
+  }, []); // Load on initial render
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -152,6 +177,43 @@ const Staff = () => {
     setStaffToDelete(null);
   };
 
+  const handleFilterChange = (type, value) => {
+    let updatedFilters = { ...filters };
+    
+    if (type === 'role') {
+      // Toggle role selection
+      if (updatedFilters.roles.includes(value)) {
+        updatedFilters.roles = updatedFilters.roles.filter(role => role !== value);
+      } else {
+        updatedFilters.roles = [...updatedFilters.roles, value];
+      }
+    } else {
+      updatedFilters[type] = value;
+    }
+    
+    setFilters(updatedFilters);
+  };
+  
+  const clearFilters = () => {
+    setFilters({
+      roles: [],
+      minRating: '',
+      maxRating: '',
+      minOrders: '',
+      maxOrders: ''
+    });
+  };
+  
+  const hasActiveFilters = () => {
+    return (
+      filters.roles.length > 0 ||
+      filters.minRating !== '' ||
+      filters.maxRating !== '' ||
+      filters.minOrders !== '' ||
+      filters.maxOrders !== ''
+    );
+  };
+
   const getRoleIcon = (role) => {
     switch (role) {
       case 'Server':
@@ -164,6 +226,19 @@ const Staff = () => {
         return <UserIcon className="h-5 w-5 text-gray-500" />;
     }
   };
+  
+  const applyFilters = () => {
+    loadStaffMembers();
+    if (window.innerWidth < 768) {
+      setShowFilters(false); // Close filter panel on mobile after applying
+    }
+  };
+  
+  const toggleFilters = () => {
+    setShowFilters(prev => !prev);
+  };
+
+  const roleOptions = ['Server', 'Host', 'Bartender'];
 
   return (
     <div className="app-container py-6">
@@ -219,39 +294,6 @@ const Staff = () => {
             </div>
           </div>
           
-          <div className="card p-4 flex flex-col justify-between">
-            <div className="flex items-center gap-3 mb-1">
-              <FilterIcon className="h-5 w-5 text-primary" />
-              <h2 className="font-semibold">Filter by Role</h2>
-            </div>
-            <div className="mt-2 space-y-2">
-              <button
-                onClick={() => setRoleFilter('')}
-                className={`btn w-full ${!roleFilter ? 'btn-primary' : 'btn-outline'}`}
-              >
-                All Roles
-              </button>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={() => setRoleFilter('Server')}
-                  className={`btn ${roleFilter === 'Server' ? 'btn-primary' : 'btn-outline'} flex items-center justify-center gap-1`}
-                >
-                  <ServerIcon className="h-4 w-4" /> Server
-                </button>
-                <button
-                  onClick={() => setRoleFilter('Host')}
-                  className={`btn ${roleFilter === 'Host' ? 'btn-primary' : 'btn-outline'} flex items-center justify-center gap-1`}
-                >
-                  <HostIcon className="h-4 w-4" /> Host
-                </button>
-                <button
-                  onClick={() => setRoleFilter('Bartender')}
-                  className={`btn ${roleFilter === 'Bartender' ? 'btn-primary' : 'btn-outline'} flex items-center justify-center gap-1`}
-                >
-                  <BartenderIcon className="h-4 w-4" /> Bartender
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -274,13 +316,213 @@ const Staff = () => {
               Search
             </button>
           </form>
-          
-          <button
-            onClick={loadStaffMembers}
-            className="btn btn-outline flex items-center justify-center gap-2"
+
+          <div className="flex items-center gap-2">
+            {hasActiveFilters() && (
+              <button
+                onClick={clearFilters}
+                className="btn btn-outline flex items-center justify-center gap-1 text-red-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                <CloseIcon className="h-4 w-4" /> Clear Filters
+              </button>
+            )}
+            <button
+              onClick={toggleFilters}
+              className={`btn ${showFilters ? 'btn-primary' : 'btn-outline'} flex items-center justify-center gap-1`}
+            >
+              <FilterIcon className="h-4 w-4" /> 
+              Filters
+              <ChevronDownIcon className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <button
+              onClick={loadStaffMembers}
+              className="btn btn-outline flex items-center justify-center gap-2"
+            >
+              <RefreshIcon className="h-4 w-4" /> Refresh
+            </button>
+          </div>
+        </div>
+        
+        {/* Active Filters Display */}
+        {hasActiveFilters() && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {filters.roles.map(role => (
+              <div key={role} className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary-dark dark:bg-primary/20 dark:text-primary-light rounded-full text-sm">
+                {getRoleIcon(role)}
+                <span>{role}</span>
+                <button 
+                  onClick={() => handleFilterChange('role', role)}
+                  className="ml-1 rounded-full hover:bg-primary/20 p-0.5"
+                >
+                  <CloseIcon className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            
+            {filters.minRating && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-yellow-500/10 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300 rounded-full text-sm">
+                <StarIcon className="h-3 w-3" />
+                <span>Min Rating: {filters.minRating}</span>
+                <button 
+                  onClick={() => handleFilterChange('minRating', '')}
+                  className="ml-1 rounded-full hover:bg-yellow-500/20 p-0.5"
+                >
+                  <CloseIcon className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+            
+            {filters.maxRating && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-yellow-500/10 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300 rounded-full text-sm">
+                <StarIcon className="h-3 w-3" />
+                <span>Max Rating: {filters.maxRating}</span>
+                <button 
+                  onClick={() => handleFilterChange('maxRating', '')}
+                  className="ml-1 rounded-full hover:bg-yellow-500/20 p-0.5"
+                >
+                  <CloseIcon className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+            
+            {filters.minOrders && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/10 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 rounded-full text-sm">
+                <span>Min Orders: {filters.minOrders}</span>
+                <button 
+                  onClick={() => handleFilterChange('minOrders', '')}
+                  className="ml-1 rounded-full hover:bg-blue-500/20 p-0.5"
+                >
+                  <CloseIcon className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+            
+            {filters.maxOrders && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/10 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 rounded-full text-sm">
+                <span>Max Orders: {filters.maxOrders}</span>
+                <button 
+                  onClick={() => handleFilterChange('maxOrders', '')}
+                  className="ml-1 rounded-full hover:bg-blue-500/20 p-0.5"
+                >
+                  <CloseIcon className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Collapsible Filter Panel */}
+        {showFilters && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-6 card overflow-hidden"
           >
-            <RefreshIcon className="h-4 w-4" /> Refresh
-          </button>
+            <div className="p-4 border-b border-surface-200 dark:border-surface-700">
+              <h3 className="font-medium">Filter Staff Members</h3>
+            </div>
+            
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Role Filter */}
+              <div>
+                <h4 className="font-medium mb-2 text-surface-700 dark:text-surface-300">Role</h4>
+                <div className="space-y-2">
+                  {roleOptions.map(role => (
+                    <label key={role} className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={filters.roles.includes(role)}
+                        onChange={() => handleFilterChange('role', role)}
+                        className="rounded text-primary focus:ring-primary dark:bg-surface-700"
+                      />
+                      <div className="flex items-center gap-1.5">
+                        {getRoleIcon(role)}
+                        <span>{role}</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Rating Filter */}
+              <div>
+                <h4 className="font-medium mb-2 text-surface-700 dark:text-surface-300">Rating</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="label text-xs">Min Rating</label>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="5" 
+                      step="0.1" 
+                      value={filters.minRating}
+                      onChange={(e) => handleFilterChange('minRating', e.target.value)}
+                      className="input"
+                    />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Max Rating</label>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="5" 
+                      step="0.1" 
+                      value={filters.maxRating}
+                      onChange={(e) => handleFilterChange('maxRating', e.target.value)}
+                      className="input"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Orders Processed Filter */}
+              <div>
+                <h4 className="font-medium mb-2 text-surface-700 dark:text-surface-300">Orders Processed</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="label text-xs">Min Orders</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={filters.minOrders}
+                      onChange={(e) => handleFilterChange('minOrders', e.target.value)}
+                      className="input"
+                    />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Max Orders</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={filters.maxOrders}
+                      onChange={(e) => handleFilterChange('maxOrders', e.target.value)}
+                      className="input"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-surface-50 dark:bg-surface-800 border-t border-surface-200 dark:border-surface-700 flex justify-end">
+              <div className="flex gap-2">
+                <button 
+                  onClick={clearFilters}
+                  className="btn btn-outline"
+                >
+                  Clear All
+                </button>
+                <button 
+                  onClick={applyFilters}
+                  className="btn btn-primary"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
         {/* Staff List */}
@@ -304,7 +546,7 @@ const Staff = () => {
               <UserIcon className="h-12 w-12 mx-auto text-surface-400 mb-4" />
               <h3 className="text-lg font-medium mb-2">No staff members found</h3>
               <p className="text-surface-500 dark:text-surface-400 mb-4">
-                {searchTerm || roleFilter ? 'Try changing your search or filters' : 'Add your first staff member to get started'}
+                {searchTerm || hasActiveFilters() ? 'Try changing your search or filters' : 'Add your first staff member to get started'}
               </p>
               <button
                 onClick={handleAddStaff}

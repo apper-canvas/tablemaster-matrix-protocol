@@ -30,7 +30,7 @@ export const fetchStaffMembers = async (filters = {}) => {
       where: []
     };
 
-    // Add filters if provided
+    // Add text search filter
     if (filters.searchTerm) {
       params.where.push({
         fieldName: "Name",
@@ -39,11 +39,54 @@ export const fetchStaffMembers = async (filters = {}) => {
       });
     }
 
-    if (filters.role) {
+    // Handle multiple role filters
+    if (filters.roles && filters.roles.length > 0) {
       params.where.push({
         fieldName: "role",
         operator: "ExactMatch",
-        values: [filters.role]
+        values: filters.roles
+      });
+    }
+    
+    // Add rating range filters
+    if (filters.minRating !== undefined && filters.minRating !== '') {
+      params.where.push({
+        fieldName: "averageRating",
+        operator: "GreaterThanOrEqualTo",
+        values: [parseFloat(filters.minRating)]
+      });
+    }
+    
+    if (filters.maxRating !== undefined && filters.maxRating !== '') {
+      params.where.push({
+        fieldName: "averageRating",
+        operator: "LessThanOrEqualTo", 
+        values: [parseFloat(filters.maxRating)]
+      });
+    }
+    
+    // Add orders processed range filters
+    if (filters.minOrders !== undefined && filters.minOrders !== '') {
+      params.where.push({
+        fieldName: "ordersProcessed",
+        operator: "GreaterThanOrEqualTo",
+        values: [parseInt(filters.minOrders)]
+      });
+    }
+    
+    if (filters.maxOrders !== undefined && filters.maxOrders !== '') {
+      params.where.push({
+        fieldName: "ordersProcessed",
+        operator: "LessThanOrEqualTo",
+        values: [parseInt(filters.maxOrders)]
+      });
+    }
+    
+    // Add support for sorting (future enhancement)
+    if (filters.sortBy) {
+      params.orderBy = [{
+        fieldName: filters.sortBy,
+        SortType: filters.sortDirection || "ASC"
       });
     }
 
