@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { createStaffMember, updateStaffMember, getStaffMemberById } from '../services/staffService';
+import { saveStaffMember, fetchStaffMemberById } from '../services/staffService';
 import { getIcon } from '../utils/iconUtils';
 
 const StaffForm = ({ staffId = null, onSuccess, onCancel }) => {
@@ -27,7 +27,7 @@ const StaffForm = ({ staffId = null, onSuccess, onCancel }) => {
       
       setIsLoadingData(true);
       try {
-        const staffData = await getStaffMemberById(staffId);
+        const staffData = await fetchStaffMemberById(staffId);
         if (staffData) {
           // Convert Tags from array to comma-separated string for the form
           const formattedData = {
@@ -119,9 +119,11 @@ const StaffForm = ({ staffId = null, onSuccess, onCancel }) => {
       };
       
       if (staffId) {
-        await updateStaffMember(staffId, dataToSubmit);
+        // Include Id field when updating
+        dataToSubmit.Id = staffId;
+        await saveStaffMember(dataToSubmit);
       } else {
-        await createStaffMember(dataToSubmit);
+        await saveStaffMember(dataToSubmit);
       }
       
       onSuccess();
