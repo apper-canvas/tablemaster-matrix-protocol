@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
 import Chart from 'react-apexcharts';
-import MainFeature from '../components/MainFeature';
 import { getIcon } from '../utils/iconUtils';
 
 // Sample data for statistics
 const statsData = [
   {
-    title: 'Today\'s Sales',
+    title: "Today's Sales",
     value: '$3,256.70',
     change: '+14.5%',
     changeType: 'increase',
