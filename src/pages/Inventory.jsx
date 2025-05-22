@@ -185,6 +185,12 @@ const IngredientForm = ({ ingredient, onSubmit, onCancel }) => {
               value={formData.cost}
               onChange={handleChange}
               type="number"
+              min="0"
+              step="0.01"
+              className="input"
+              placeholder="0.00"
+              required
+              type="number"
               required
             />
           </div>
@@ -1053,7 +1059,7 @@ const Inventory = () => {
                     <div className="p-6">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="text-xl font-bold">
-                          {editingIngredient ? 'Edit Ingredient' : 'Add New Ingredient'}
+                        {editingIngredient ? 'Edit Ingredient' : 'Add New Ingredient'}
                         </h3>
                         <button 
                           onClick={() => {
@@ -1761,4 +1767,8 @@ const Inventory = () => {
           )}
         </AnimatePresence>
       </div>
-  ); 
+    </div>
+  );
+}
+
+export default Inventory;
