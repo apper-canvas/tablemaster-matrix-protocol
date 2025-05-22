@@ -1765,7 +1765,6 @@ const Inventory = () => {
         </AnimatePresence>
       </div>
   ); 
-  );
 
 
 export default Inventory;
