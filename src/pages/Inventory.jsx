@@ -190,8 +190,7 @@ const IngredientForm = ({ ingredient, onSubmit, onCancel }) => {
               className="input"
               placeholder="0.00"
               required
-              type="number"
-              required
+              step="0.01"
             />
           </div>
         </div>
@@ -543,10 +542,10 @@ const Inventory = () => {
     // Start filtering
     .filter(ingredient => {
       // Apply search filter
-      const matchesSearch = 
-        ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ingredient.vendor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ingredient.category.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = searchTerm === '' || 
+        (ingredient.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (ingredient.vendor?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (ingredient.category?.toLowerCase() || '').includes(searchTerm.toLowerCase());
       
       // Apply category filter
       const matchesCategory = 
