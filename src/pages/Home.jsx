@@ -42,23 +42,6 @@ const StatsCard = ({ icon, title, value, trend, trendValue }) => {
 };
 
 // Quick Action Button Component
-const QuickActionButton = ({ icon, label, onClick }) => {
-  const IconComponent = getIcon(icon);
-  
-  return (
-    <motion.button
-      onClick={onClick}
-      className="flex flex-col items-center justify-center p-4 bg-white dark:bg-surface-800 rounded-xl shadow-card border border-surface-200 dark:border-surface-700 hover:border-primary/50 dark:hover:border-primary/50 transition-colors"
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.98 }}
-    >
-      <div className="w-12 h-12 flex items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20 mb-3">
-        <IconComponent className="w-6 h-6 text-primary dark:text-primary-light" />
-      </div>
-      <span className="text-sm font-medium text-surface-700 dark:text-surface-300">{label}</span>
-    </motion.button>
-  );
-};
 
 // Home Page
 const Home = () => {
@@ -71,11 +54,6 @@ const Home = () => {
     { icon: 'users', title: 'Customers', value: '86', trend: 'down', trendValue: '3.1%' },
     { icon: 'clock', title: 'Avg. Wait Time', value: '18 min', trend: 'down', trendValue: '5.4%' }
   ];
-  
-  // Handle quick actions
-  const handleQuickAction = (action) => {
-    toast.success(`${action} action initiated!`);
-  };
   
   return (
     <div className="app-container py-6 md:py-8">
@@ -125,43 +103,6 @@ const Home = () => {
             trendValue={stat.trendValue}
           />
         ))}
-      </div>
-      
-      {/* Quick Actions */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4 text-surface-800 dark:text-surface-200">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          <QuickActionButton 
-            icon="plus-circle" 
-            label="New Order" 
-            onClick={() => handleQuickAction("New Order")} 
-          />
-          <QuickActionButton 
-            icon="calendar" 
-            label="Reservation" 
-            onClick={() => handleQuickAction("Reservation")} 
-          />
-          <QuickActionButton 
-            icon="shopping-cart" 
-            label="Inventory" 
-            onClick={() => handleQuickAction("Inventory")} 
-          />
-          <QuickActionButton 
-            icon="user-plus" 
-            label="Add Staff" 
-            onClick={() => handleQuickAction("Add Staff")} 
-          />
-          <QuickActionButton 
-            icon="pie-chart" 
-            label="Reports" 
-            onClick={() => handleQuickAction("Reports")} 
-          />
-          <QuickActionButton 
-            icon="settings" 
-            label="Settings" 
-            onClick={() => handleQuickAction("Settings")} 
-          />
-        </div>
       </div>
       
       {/* Main Feature */}
