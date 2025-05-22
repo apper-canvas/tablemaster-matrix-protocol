@@ -87,7 +87,7 @@ export const fetchStaffMembers = async (filters = {}) => {
       params.orderBy = [{
         fieldName: filters.sortBy,
         SortType: filters.sortDirection || "ASC"
-      });
+      })];
     }
 
     const response = await apperClient.fetchRecords("staff_member", params);
