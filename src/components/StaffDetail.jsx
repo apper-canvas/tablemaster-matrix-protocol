@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { fetchStaffMemberById } from '../services/staffService.js';
 import { getStaffMemberById } from '../services/staffService';
 import { getIcon } from '../utils/iconUtils';
+import { toast } from 'react-toastify';
 import { format } from 'date-fns';
 
 const StaffDetail = ({ staffId, onClose, onEdit }) => {
@@ -16,7 +16,7 @@ const StaffDetail = ({ staffId, onClose, onEdit }) => {
   const TagIcon = getIcon('tag');
   const ClipboardIcon = getIcon('clipboardList');
   const DollarIcon = getIcon('dollarSign');
-        const data = await fetchStaffMemberById(staffId);
+  const StarIcon = getIcon('star');
 
   useEffect(() => {
     const fetchStaffData = async () => {
