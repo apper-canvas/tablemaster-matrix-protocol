@@ -60,6 +60,7 @@ export const fetchWaitlist = async () => {
     console.error("Error fetching waitlist:", error);
     toast.error("Failed to load waitlist. Please try again.");
     throw error;
+    
   }
 };
 
@@ -135,6 +136,103 @@ export const updateWaitlistEntry = async (entryData) => {
   } catch (error) {
     console.error("Error updating waitlist entry:", error);
     toast.error("Failed to update waitlist entry. Please try again.");
+    throw error;
+  }
+};
+
+/**
+ * Mark a customer as notified
+ */
+export const notifyCustomer = async (entryId) => {
+  try {
+    const apperClient = getApperClient();
+    
+    const updateData = {
+      Id: entryId,
+      notified: true,
+      notifiedAt: new Date().toISOString()
+    };
+    
+    const params = {
+      records: [updateData]
+    };
+    
+    const response = await apperClient.updateRecord('waitlist_entry', params);
+    
+    if (!response || !response.success) {
+      throw new Error("Failed to mark customer as notified");
+    }
+    
+    toast.success("Customer has been notified");
+    return response.results[0].data;
+  } catch (error) {
+    console.error("Error notifying customer:", error);
+    toast.error("Failed to notify customer. Please try again.");
+    throw error;
+  }
+};
+
+/**
+ * Mark a customer as seated and remove from active waitlist
+ */
+export const seatCustomer = async (entryId) => {
+  try {
+    const apperClient = getApperClient();
+    
+    const updateData = {
+      Id: entryId,
+      status: 'seated',
+      seatedAt: new Date().toISOString()
+    };
+    
+    const params = {
+      records: [updateData]
+    };
+    
+    const response = await apperClient.updateRecord('waitlist_entry', params);
+    
+    if (!response || !response.success) {
+      throw new Error("Failed to seat customer");
+    }
+    
+    toast.success("Customer has been seated");
+    return response.results[0].data;
+  } catch (error) {
+    console.error("Error seating customer:", error);
+    toast.error("Failed to seat customer. Please try again.");
+    throw error;
+  }
+};
+
+/**
+ * Remove customer from waitlist (mark as cancelled)
+ */
+export const removeFromWaitlist = async (entryId, reason = '') => {
+  try {
+    const apperClient = getApperClient();
+    
+    const updateData = {
+      Id: entryId,
+      status: 'cancelled',
+      cancelledAt: new Date().toISOString(),
+      notes: reason ? `${reason} (Cancelled)` : '(Cancelled)'
+    };
+    
+    const params = {
+      records: [updateData]
+    };
+    
+    const response = await apperClient.updateRecord('waitlist_entry', params);
+    
+    if (!response || !response.success) {
+      throw new Error("Failed to remove customer from waitlist");
+    }
+    
+    toast.success("Customer removed from waitlist");
+    return response.results[0].data;
+  } catch (error) {
+    console.error("Error removing from waitlist:", error);
+    toast.error("Failed to remove from waitlist. Please try again.");
     throw error;
   }
 };

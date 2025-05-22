@@ -8,6 +8,7 @@ import { getIcon } from './utils/iconUtils';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import MenuBuilder from './pages/MenuBuilder';
+import Waitlist from './pages/Waitlist';
 import Tables from './pages/Tables';
 import Inventory from './pages/Inventory';
 import Orders from './pages/Orders';
@@ -23,6 +24,7 @@ const Header = ({ darkMode, toggleDarkMode }) => {
   const MenuIcon = getIcon('menu');
   const MoonIcon = getIcon('moon');
   const SunIcon = getIcon('sun');
+  { path: '/waitlist', element: <Waitlist />, name: 'Waitlist', icon: 'users' },
   const RestaurantIcon = getIcon('utensils');
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);  

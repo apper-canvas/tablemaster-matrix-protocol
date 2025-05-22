@@ -5,7 +5,7 @@ import { getIcon } from '../utils/iconUtils';
 const WaitlistEntry = ({ entry, onNotify, onSeat, onEdit, onRemove }) => {
   const [waitTime, setWaitTime] = useState('');
   
-  // Icons
+  // Initialize icons
   const UserIcon = getIcon('user');
   const UsersIcon = getIcon('users');
   const BellIcon = getIcon('bell');
@@ -20,7 +20,11 @@ const WaitlistEntry = ({ entry, onNotify, onSeat, onEdit, onRemove }) => {
   useEffect(() => {
     const updateWaitTime = () => {
       try {
-        setWaitTime(formatDistanceToNow(new Date(entry.timeAdded), { addSuffix: false }));
+        if (entry.timeAdded) {
+          setWaitTime(formatDistanceToNow(new Date(entry.timeAdded), { addSuffix: false }));
+        } else {
+          setWaitTime('just now');
+        }
       } catch (error) {
         setWaitTime('unknown');
       }
@@ -32,13 +36,18 @@ const WaitlistEntry = ({ entry, onNotify, onSeat, onEdit, onRemove }) => {
     return () => clearInterval(interval);
   }, [entry.timeAdded]);
   
+  // Don't render if the entry has been seated or cancelled
+  if (entry.status === 'seated' || entry.status === 'cancelled') {
+    return null;
+  }
+  
   return (
-    <div className={`card p-4 mb-3 ${entry.notified ? 'border-l-4 border-blue-500' : ''}`}>
+    <div className={`card p-4 mb-3 ${entry.notified ? 'border-l-4 border-blue-500' : 'border-l-4 border-yellow-500'}`}>
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center 
-            ${entry.notified 
-              ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
+            ${entry.notified
+              ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
               : 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400'}`}>
             {entry.partySize > 1 ? <UsersIcon className="w-5 h-5" /> : <UserIcon className="w-5 h-5" />}
           </div>
@@ -53,7 +62,7 @@ const WaitlistEntry = ({ entry, onNotify, onSeat, onEdit, onRemove }) => {
         <div className="flex space-x-1">
           <button 
             onClick={() => onNotify(entry)}
-            className={`p-1 rounded-md hover:bg-surface-200 dark:hover:bg-surface-700 ${entry.notified ? 'text-blue-500' : 'text-yellow-500'}`}
+            className={`p-1 rounded-md hover:bg-surface-200 dark:hover:bg-surface-700 ${entry.notified ? 'text-blue-500 cursor-not-allowed' : 'text-yellow-500'}`}
             disabled={entry.notified}
             title={entry.notified ? 'Already Notified' : 'Notify Customer'}>
             {entry.notified ? <BellOffIcon className="w-4 h-4" /> : <BellIcon className="w-4 h-4" />}
@@ -77,7 +86,7 @@ const WaitlistEntry = ({ entry, onNotify, onSeat, onEdit, onRemove }) => {
         </div>
         <div className="flex items-center">
           <div className={`px-2 py-0.5 rounded text-xs font-medium
-            ${entry.partySize > 6 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 
+            ${entry.partySize > 6 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
               entry.partySize > 4 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' : 
               'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'}`}>
             {entry.partySize} {entry.partySize === 1 ? 'person' : 'people'}
