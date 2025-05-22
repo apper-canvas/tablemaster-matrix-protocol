@@ -3,14 +3,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
-import { 
-  addIngredient, 
-  updateIngredient, 
-  deleteIngredient, 
-  addStock, 
-  logWaste, 
-  generatePurchaseOrder 
-} from '../redux/slices/inventorySlice';
+import {
+  fetchIngredients, createIngredient, updateIngredient, deleteIngredient, logWaste
+} from '../services/ingredientService';
+import { addStock, generatePurchaseOrder } from '../redux/slices/inventorySlice';
 
 // Ingredient Form Component
 const IngredientForm = ({ ingredient, onSubmit, onCancel }) => {
@@ -463,10 +459,12 @@ const WasteLogForm = ({ ingredient, onSubmit, onCancel }) => {
 
 // Main Inventory Component
 const Inventory = () => {
-  const dispatch = useDispatch();
-  const ingredients = useSelector(state => state.inventory.ingredients);
-  const allIngredients = Object.values(ingredients.byId);
-  const waste = useSelector(state => state.inventory.waste);
+  const [ingredients, setIngredients] = useState({ byId: {}, allIds: [] });
+  const [allIngredients, setAllIngredients] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const waste = useSelector(state => state.inventory.waste); 
   const purchaseOrders = useSelector(state => state.inventory.purchaseOrders);
   
   // New state for waste log tab
@@ -509,10 +507,33 @@ const Inventory = () => {
   const CheckIcon = getIcon('check');
   const TruckIcon = getIcon('truck');
   const FileBarChartIcon = getIcon('file-bar-chart');
+
+  // Fetch ingredients from API on component mount
+  useEffect(() => {
+    const loadIngredients = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchIngredients();
+        
+        // Transform data to match the expected format
+        const byId = data.reduce((acc, ingredient) => {
+          acc[ingredient.Id] = { ...ingredient, id: ingredient.Id };
+          return acc;
+        }, {});
+        
+        setIngredients({ byId, allIds: data.map(i => i.Id) });
+        setAllIngredients(data.map(i => ({ ...i, id: i.Id })));
+        setError(null);
+      } catch (err) {
+        setError('Failed to load ingredients. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadIngredients();
+  }, []);
   
-  // Filter and sort ingredients
-  const filteredIngredients = ingredients.allIds
-    .map(id => ingredients.byId[id])
     .filter(ingredient => {
       // Apply search filter
       const matchesSearch = 
@@ -664,14 +685,14 @@ const Inventory = () => {
   
   // Handle adding a new ingredient
   const handleAddIngredient = (formData) => {
-    dispatch(addIngredient(formData));
+    createIngredient(formData);
     setIsAddingIngredient(false);
     toast.success(`${formData.name} added to inventory`);
   };
   
   // Handle updating an ingredient
   const handleUpdateIngredient = (formData) => {
-    dispatch(updateIngredient({
+    updateIngredient({
       id: editingIngredient.id,
       ...formData
     }));
@@ -682,7 +703,7 @@ const Inventory = () => {
   // Handle deleting an ingredient
   const handleDeleteIngredient = (id, name) => {
     if (window.confirm(`Are you sure you want to delete ${name}?`)) {
-      dispatch(deleteIngredient(id));
+      deleteIngredient(id);
       setSelectedIngredient(null);
       toast.success(`${name} removed from inventory`);
     }
@@ -710,7 +731,7 @@ const Inventory = () => {
   
   // Handle logging waste
   const handleLogWaste = (wasteData) => {
-    dispatch(logWaste(wasteData));
+    logWaste(wasteData);
     setActionMode(null);
     toast.success(`Waste logged successfully`);
   };
@@ -776,6 +797,15 @@ const Inventory = () => {
     toast.success(`Generated ${Object.keys(vendorGroups).length} purchase orders`);
   };
 
+      {isLoading ? (
+        <div className="text-center py-8">
+          <p className="text-lg">Loading inventory data...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-500">
+          <p className="text-lg">{error}</p>
+        </div>
+      ) : (
   // Handle receiving a purchase order
   const handleReceivePO = (po) => {
     if (po.status === 'received') {
@@ -837,9 +867,11 @@ const Inventory = () => {
               transition={{ duration: 0.3 }}
             >
               {/* Action Bar */}
-              <div className="mb-4 flex flex-col md:flex-row gap-3 justify-between">
+                    {isLoading ? (
+                      <tr><td colSpan="7" className="px-4 py-6 text-center">Loading ingredients...</td></tr>
+                    ) : allIngredients.length === 0 ? (
                 <div className="flex flex-col md:flex-row gap-3">
-                  {/* Search Field */}
+                      <td colSpan="7" className="px-4 py-6 text-center text-surface-500 dark:text-surface-400">
                   <div className="relative">
                     <input
                       type="text"
@@ -1725,6 +1757,7 @@ const Inventory = () => {
         </AnimatePresence>
       </div>
     </div>
+    )}
   );
 };
 

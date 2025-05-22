@@ -5,19 +5,14 @@ import { toast } from 'react-toastify';
 import { format, parseISO, addMinutes } from 'date-fns';
 import { HexColorPicker } from 'react-colorful';
 import { getIcon } from '../utils/iconUtils';
+import { fetchTables, createTable, updateTable, deleteTable } from '../services/tableService';
+import { fetchTableSections } from '../services/tableService';
+import { fetchReservations, createReservation, updateReservation, cancelReservation } from '../services/reservationService';
+import { fetchWaitlist, addToWaitlist, updateWaitlistEntry } from '../services/waitlistService';
 import TableFloorPlan from '../components/TableFloorPlan';
 import {
-  addTable,
-  updateTable,
-  deleteTable,
   setTableStatus,
-  addReservation,
-  updateReservation,
-  cancelReservation,
-  addToWaitlist,
-  updateWaitlistEntry,
-  notifyCustomer,
-  removeFromWaitlist
+  notifyCustomer, removeFromWaitlist
 } from '../redux/slices/tablesSlice';
 
 // Tab component for navigation
@@ -560,9 +555,14 @@ const WaitlistForm = ({ isOpen, onClose, initialData, onSubmit }) => {
 // Main Tables component
 const Tables = () => {
   const dispatch = useDispatch();
-  const tables = useSelector(state => state.tables.tables);
+  const tablesFromStore = useSelector(state => state.tables.tables);
   const sections = useSelector(state => state.tables.sections);
-  const reservations = useSelector(state => state.tables.reservations);
+  const reservationsFromStore = useSelector(state => state.tables.reservations);
+  
+  // New state for data from API
+  const [tables, setTables] = useState([]);
+  const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
   const waitlist = useSelector(state => state.tables.waitlist);
   
   const [selectedTable, setSelectedTable] = useState(null);
@@ -601,6 +601,41 @@ const Tables = () => {
   const UsersIcon = getIcon('users');
   
   // Format time
+  // Load data from API on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        // Fetch tables and sections from API
+        const [tablesData, sectionsData, reservationsData, waitlistData] = await Promise.all([
+          fetchTables(),
+          fetchTableSections(),
+          fetchReservations(),
+          fetchWaitlist()
+        ]);
+        
+        setTables(tablesData.map(table => ({
+          ...table,
+          id: table.Id
+        })));
+        
+        setReservations(reservationsData.map(reservation => ({
+          ...reservation,
+          id: reservation.Id
+        })));
+        
+        // Update Redux store if needed for compatibility with existing code
+        // This would ideally be refactored to use only the API data
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast.error("Failed to load data. Please try again.");
+      }
+      setLoading(false);
+    };
+    
+    loadData();
+  }, []);
+  
   const formatTime = (timeString) => {
     if (!timeString) return '';
     try {
@@ -612,10 +647,11 @@ const Tables = () => {
   
   // Handle form submissions
   const handleTableFormSubmit = (data) => {
-    if (data.id) {
-      dispatch(updateTable(data));
+    if (data.Id || data.id) {
+      const tableId = data.Id || data.id;
+      updateTable({ ...data, Id: tableId });
       toast.success(`Table ${data.number} updated successfully`);
-    } else {
+    } else { 
       // Set default position if this is a new table
       const newData = {
         ...data,
@@ -628,16 +664,16 @@ const Tables = () => {
   };
   
   const handleReservationFormSubmit = (data) => {
-    if (data.id) {
-      dispatch(updateReservation(data));
+    if (data.Id || data.id) {
+      updateReservation({ ...data, Id: data.Id || data.id });
       toast.success(`Reservation for ${data.customerName} updated`);
     } else {
-      dispatch(addReservation(data));
+      createReservation(data);
       toast.success(`Reservation for ${data.customerName} created`);
     }
   };
   
-  const handleWaitlistFormSubmit = (data) => {
+   const handleWaitlistFormSubmit = (data) => {
     if (data.id) {
       dispatch(updateWaitlistEntry(data));
       toast.success(`Waitlist entry for ${data.customerName} updated`);
@@ -660,7 +696,7 @@ const Tables = () => {
     
     switch (currentAction.type) {
       case 'delete-table':
-        dispatch(deleteTable(currentAction.id));
+        deleteTable(currentAction.id);
         setSelectedTable(null);
         toast.success('Table deleted successfully');
         break;
@@ -721,6 +757,11 @@ const Tables = () => {
       <div className="flex flex-col space-y-6">
         <div>
           <h1 className="text-2xl font-bold mb-2">Table Management</h1>
+          {loading ? (
+            <p className="text-surface-600 dark:text-surface-400">
+              Loading table data...
+            </p>
+          ) : (
           <p className="text-surface-600 dark:text-surface-400">
             Manage restaurant tables, reservations, and waitlist
           </p>
@@ -764,6 +805,7 @@ const Tables = () => {
           {/* Table List Tab */}
           {activeTab === 'tables-list' && (
             <div className="p-6">
+              {!loading && (
               <div className="flex justify-between items-center mb-4">
                 <button
                   onClick={() => openTableForm()}
@@ -773,6 +815,7 @@ const Tables = () => {
                   Add Table
                 </button>
               </div>
+              )}
               
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -787,6 +830,13 @@ const Tables = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-200 dark:divide-surface-700">
+                    {loading ? (
+                      <tr>
+                        <td colSpan="6" className="px-4 py-3 text-center">
+                          Loading tables...
+                        </td>
+                      </tr>
+                    ) : (
                     {tables.map(table => (
                       <tr key={table.id} className="hover:bg-surface-50 dark:hover:bg-surface-750">
                         <td className="px-4 py-3 font-medium">{table.number}</td>
@@ -831,6 +881,7 @@ const Tables = () => {
                         </td>
                       </tr>
                     ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -840,6 +891,7 @@ const Tables = () => {
           {/* Reservations Tab */}
           {activeTab === 'reservations' && (
             <div className="p-6">
+              {!loading && (
               <div className="flex justify-between items-center mb-4">
                 <button
                   onClick={() => openReservationForm()}
@@ -849,6 +901,7 @@ const Tables = () => {
                   New Reservation
                 </button>
               </div>
+              )}
               
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -862,6 +915,13 @@ const Tables = () => {
                       <th className="px-4 py-3 text-right font-medium text-surface-600 dark:text-surface-300">Actions</th>
                     </tr>
                   </thead>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="6" className="px-4 py-3 text-center">
+                          Loading reservations...
+                        </td>
+                      </tr>
+                    ) : (
                   <tbody className="divide-y divide-surface-200 dark:divide-surface-700">
                     {activeReservations.map(reservation => {
                       const table = tables.find(t => t.id === reservation.tableId);
@@ -907,6 +967,7 @@ const Tables = () => {
                         </tr>
                       );
                     })}
+                    )}
                   </tbody>
                 </table>
                 
@@ -1030,6 +1091,7 @@ const Tables = () => {
               </div>
             </div>
           )}
+      )}
         </div>
       </div>
       
