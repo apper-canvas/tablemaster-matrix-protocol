@@ -6,7 +6,7 @@ import { getIcon } from '../utils/iconUtils';
 import {
   fetchIngredients, createIngredient, updateIngredient, deleteIngredient, logWaste
 } from '../services/ingredientService';
-import { addStock, generatePurchaseOrder } from '../redux/slices/inventorySlice';
+import { addStock, generatePurchaseOrder, updatePurchaseOrderStatus } from '../redux/slices/inventorySlice';
 
 // Ingredient Form Component
 const IngredientForm = ({ ingredient, onSubmit, onCancel }) => {
@@ -828,9 +828,7 @@ const Inventory = () => {
     
     toast.success('Purchase order received successfully');
   };
-  
-  };
-  
+    
   return (
     <div className="app-container py-6 md:py-8">
       <h1 className="text-2xl md:text-3xl font-bold mb-6">Inventory Management</h1>
@@ -1766,7 +1764,7 @@ const Inventory = () => {
           )}
         </AnimatePresence>
       </div>
-    )}
+  ); 
   );
 };
 
