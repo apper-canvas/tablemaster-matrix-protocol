@@ -13,6 +13,7 @@ import Inventory from './pages/Inventory';
 import Orders from './pages/Orders';
 import Reports from './pages/Reports';
 import Login from './pages/Login';
+import Staff from './pages/Staff';
 import Signup from './pages/Signup';
 import Callback from './pages/Callback';
 import ErrorPage from './pages/ErrorPage';
@@ -298,6 +299,7 @@ function App() {
               <Route path="/orders" element={isAuthenticated ? <Orders /> : <Login />} />
               <Route path="/inventory" element={isAuthenticated ? <Inventory /> : <Login />} />
               <Route path="/reports" element={isAuthenticated ? <Reports /> : <Login />} />
+              <Route path="/staff" element={isAuthenticated ? <Staff /> : <Login />} />
             </Routes>
           </motion.div>
         </main>
