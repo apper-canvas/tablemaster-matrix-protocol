@@ -5,9 +5,10 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
-      // Define TypeInfo globally to prevent ReferenceError in index.umd.js
-      window.TypeInfo = {
-        isRequired: false
+      // Define TypeInfo as a constructor function to prevent TypeError in index.umd.js
+      window.TypeInfo = function(options) {
+        this.isRequired = options?.isRequired || false;
+        return this;
       };
     </script>
     <meta name="description" content="TableMaster - Comprehensive restaurant management platform for restaurant owners" />
@@ -16,7 +17,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   </head>
     <!-- Load Apper SDK -->
-    <script src="https://test-cdn.apper.io/v1/apper-sdk.v1.js"></script>
   <body class="bg-surface-50 dark:bg-surface-900">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
