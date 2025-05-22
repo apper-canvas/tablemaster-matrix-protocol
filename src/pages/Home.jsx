@@ -75,7 +75,7 @@ const Home = () => {
       {/* Dashboard Tabs */}
       <div className="mb-6 border-b border-surface-200 dark:border-surface-700">
         <div className="flex space-x-6 overflow-x-auto scrollbar-hide">
-          {['overview', 'orders', 'tables', 'inventory', 'staff', 'reports'].map((tab) => (
+          {['overview', 'reports'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
