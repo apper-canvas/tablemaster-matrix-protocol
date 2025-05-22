@@ -534,6 +534,9 @@ const Inventory = () => {
     loadIngredients();
   }, []);
   
+  // Filter and sort ingredients based on search term, category, and stock level
+  const filteredIngredients = allIngredients
+    // Start filtering
     .filter(ingredient => {
       // Apply search filter
       const matchesSearch = 
@@ -695,7 +698,7 @@ const Inventory = () => {
     updateIngredient({
       id: editingIngredient.id,
       ...formData
-    }));
+    });
     setEditingIngredient(null);
     toast.success(`${formData.name} updated successfully`);
   };
