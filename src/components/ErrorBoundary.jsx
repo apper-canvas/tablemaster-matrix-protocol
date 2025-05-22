@@ -1,6 +1,9 @@
 import { Component } from 'react';
 import { getIcon } from '../utils/iconUtils';
 
+// Define TypeInfo to resolve the reference error
+const TypeInfo = { isRequired: false };
+
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
