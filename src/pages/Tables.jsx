@@ -762,8 +762,9 @@ const Tables = () => {
               Loading table data...
             </p>
           ) : (
-          <p className="text-surface-600 dark:text-surface-400">
-            Manage restaurant tables, reservations, and waitlist
+            <p className="text-surface-600 dark:text-surface-400">
+              Manage restaurant tables, reservations, and waitlist
+            </p>
           </p>
         </div>
         
@@ -837,8 +838,8 @@ const Tables = () => {
                         </td>
                       </tr>
                     ) : (
-                    {tables.map(table => (
-                      <tr key={table.id} className="hover:bg-surface-50 dark:hover:bg-surface-750">
+                      tables.map(table => (
+                        <tr key={table.id} className="hover:bg-surface-50 dark:hover:bg-surface-750">
                         <td className="px-4 py-3 font-medium">{table.number}</td>
                         <td className="px-4 py-3">{table.capacity} seats</td>
                         <td className="px-4 py-3">{sections.find(s => s.id === table.section)?.name || table.section}</td>
@@ -879,8 +880,8 @@ const Tables = () => {
                             Delete
                           </button>
                         </td>
-                      </tr>
-                    ))}
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
