@@ -800,15 +800,6 @@ const Inventory = () => {
     toast.success(`Generated ${Object.keys(vendorGroups).length} purchase orders`);
   };
 
-      {isLoading ? (
-        <div className="text-center py-8">
-          <p className="text-lg">Loading inventory data...</p>
-        </div>
-      ) : error ? (
-        <div className="text-center py-8 text-red-500">
-          <p className="text-lg">{error}</p>
-        </div>
-      ) : (
   // Handle receiving a purchase order
   const handleReceivePO = (po) => {
     if (po.status === 'received') {
@@ -820,14 +811,6 @@ const Inventory = () => {
       return;
     }
 
-    // Update each item's stock
-    po.items.forEach(item => {
-      dispatch(addStock({
-        ingredientId: item.ingredientId,
-        quantity: item.quantity,
-        date: new Date().toISOString().split('T')[0]
-      }));
-    });
   };
   
   return (
@@ -870,11 +853,17 @@ const Inventory = () => {
               transition={{ duration: 0.3 }}
             >
               {/* Action Bar */}
-                    {isLoading ? (
-                      <tr><td colSpan="7" className="px-4 py-6 text-center">Loading ingredients...</td></tr>
-                    ) : allIngredients.length === 0 ? (
+              {isLoading ? (
+        <div className="text-center py-8">
+          <p className="text-lg">Loading inventory data...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-500">
+          <p className="text-lg">{error}</p>
+        </div>
+      ) : (
+              <div>
                 <div className="flex flex-col md:flex-row gap-3">
-                      <td colSpan="7" className="px-4 py-6 text-center text-surface-500 dark:text-surface-400">
                   <div className="relative">
                     <input
                       type="text"
@@ -1760,6 +1749,35 @@ const Inventory = () => {
         </AnimatePresence>
       </div>
     </div>
+    });
+  };
+  
+  // Complete the handleReceivePO function
+  const handleReceivePO = (po) => {
+    if (po.status === 'received') {
+      toast.info('This order has already been received');
+      return;
+    }
+
+    if (!window.confirm(`Mark this purchase order as received? This will add the items to your inventory.`)) {
+      return;
+    }
+
+    // Update each item's stock
+    po.items.forEach(item => {
+      dispatch(addStock({
+        ingredientId: item.ingredientId,
+        quantity: item.quantity,
+        date: new Date().toISOString().split('T')[0]
+      }));
+    });
+    // Update PO status
+    dispatch(updatePurchaseOrderStatus({
+      id: po.id,
+      status: 'received'
+    }));
+    
+    toast.success('Purchase order received successfully');
     )}
   );
 };
