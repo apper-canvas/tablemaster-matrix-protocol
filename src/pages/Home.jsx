@@ -596,6 +596,10 @@ function Home() {
               </div>
             </div>
       )}
+          </motion.div>
+        </div>
+      )}
+      
       </div>
     </>
   );
