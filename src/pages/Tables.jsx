@@ -765,7 +765,7 @@ const Tables = () => {
             <p className="text-surface-600 dark:text-surface-400">
               Manage restaurant tables, reservations, and waitlist
             </p>
-          </p>
+          )}
         </div>
         
         {/* Tab navigation */}
@@ -968,8 +968,8 @@ const Tables = () => {
                         </tr>
                       );
                     })}
-                    )}
                   </tbody>
+                    )}
                 </table>
                 
                 {activeReservations.length === 0 && (
