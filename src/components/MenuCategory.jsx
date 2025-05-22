@@ -4,19 +4,21 @@ import { motion } from 'framer-motion';
 import { getIcon } from '../utils/iconUtils';
 import MenuItem from './MenuItem';
 
-// Custom wrapper component to avoid defaultProps deprecation warning
+// Custom wrapper component with default parameters instead of defaultProps
 const DroppableWrapper = ({
   droppableId,
-  type = 'DEFAULT',
-  direction = 'vertical',
-  ignoreContainerClipping = false,
-  isDropDisabled = false,
-  isCombineEnabled = false,
+  type = 'DEFAULT',  // Default parameter
+  direction = 'vertical',  // Default parameter
+  ignoreContainerClipping = false,  // Default parameter
+  isDropDisabled = false,  // Default parameter
+  isCombineEnabled = false,  // Default parameter
   children,
   ...props
 }) => {
   return (
-    <LibDroppable droppableId={droppableId} type={type} direction={direction} ignoreContainerClipping={ignoreContainerClipping} isDropDisabled={isDropDisabled} isCombineEnabled={isCombineEnabled} {...props}>
+    <LibDroppable 
+      droppableId={droppableId} 
+      type={type} direction={direction} ignoreContainerClipping={ignoreContainerClipping} isDropDisabled={isDropDisabled} isCombineEnabled={isCombineEnabled} {...props}>
       {children}
     </LibDroppable>
   );
