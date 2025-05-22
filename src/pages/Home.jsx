@@ -3,42 +3,44 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import Chart from 'react-apexcharts';
 import MainFeature from '../components/MainFeature';
+import { getIcon } from '../utils/iconUtils';
+
 // Sample data for statistics
 const statsData = [
-// Stats Card Component
+  {
     title: 'Today\'s Sales',
     value: '$3,256.70',
     change: '+14.5%',
     changeType: 'increase',
     icon: 'dollarSign',
     color: 'primary'
-  const isTrendUp = trend === 'up';
-  
+  },
+  {
     title: 'Orders',
     value: '157',
     change: '+8.2%',
     changeType: 'increase',
     icon: 'shoppingBag',
     color: 'secondary'
-    >
-      <div className="flex items-center justify-between">
+  },
+  {
     title: 'Active Tables',
-          <IconComponent className="w-7 h-7 text-primary dark:text-primary-light" />
+    value: '68%',
     change: '68%',
     changeType: 'normal',
     icon: 'users',
     color: 'accent'
-          isTrendUp 
-            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+  },
+  {
     title: 'Avg. Serving Time',
     value: '24 min',
     change: '-3.5%',
     changeType: 'decrease',
     icon: 'clock',
     color: 'purple'
-      </div>
-      
-      <div className="mt-4">
+  }
+];
+
 // Sample data for sales chart
 const salesChartData = {
   options: {
@@ -144,9 +146,9 @@ const topSellingItems = [
   { name: 'Chocolate Lava Cake', amount: '$560.30', quantity: 112, growth: '+20%' }
 ];
 
-        <h3 className="text-lg font-medium text-surface-800 dark:text-surface-100">{title}</h3>
-        <p className="mt-2 text-3xl font-bold">{value}</p>
-  
+function Home() {
+  const [activeTab, setActiveTab] = useState('overview');
+
   // Get icons
   const DollarSignIcon = getIcon('dollarSign');
   const ShoppingBagIcon = getIcon('shoppingBag');
@@ -160,7 +162,7 @@ const topSellingItems = [
   const AwardIcon = getIcon('award');
   const CalendarIcon = getIcon('calendar');
   const CheckCircleIcon = getIcon('checkCircle');
-        <p className="mt-1 md:mt-2 text-surface-600 dark:text-surface-400">
+
   // Function to get icon for stat card
   const getStatIcon = (iconName) => {
     switch (iconName) {
@@ -175,6 +177,8 @@ const topSellingItems = [
       default:
         return <BarChartIcon className="w-5 h-5" />;
     }
+  };
+
   // Function to get change icon
   const getChangeIcon = (type) => {
     switch (type) {
@@ -251,6 +255,9 @@ const topSellingItems = [
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
+
+  return (
+    <>
       <div className="mb-8 space-y-2">
         <motion.h1 
           className="text-3xl font-bold"
@@ -468,6 +475,8 @@ const topSellingItems = [
                 </div>
               </div>
             </div>
+          </motion.div>
+        </div>
       ) : (
         // Reports tab content
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -586,3 +595,9 @@ const topSellingItems = [
                 </div>
               </div>
             </div>
+      )}
+    </>
+  );
+}
+
+export default Home;
