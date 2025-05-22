@@ -185,9 +185,6 @@ const IngredientForm = ({ ingredient, onSubmit, onCancel }) => {
               value={formData.cost}
               onChange={handleChange}
               type="number"
-              min="0"
-              step="0.01"
-              className="input pl-7"
               required
             />
           </div>
@@ -268,6 +265,7 @@ const IngredientForm = ({ ingredient, onSubmit, onCancel }) => {
           onClick={onCancel}
           className="btn btn-outline"
         >
+  </form>
           Cancel
         </button>
         <button
@@ -1765,6 +1763,3 @@ const Inventory = () => {
         </AnimatePresence>
       </div>
   ); 
-
-
-export default Inventory;
