@@ -565,6 +565,7 @@ const Tables = () => {
   const reservations = useSelector(state => state.tables.reservations);
   const waitlist = useSelector(state => state.tables.waitlist);
   
+  const [selectedTable, setSelectedTable] = useState(null);
   const [activeTab, setActiveTab] = useState('tables-list');
   const [isEditMode, setIsEditMode] = useState(false);
   const [modalState, setModalState] = useState({
@@ -578,7 +579,7 @@ const Tables = () => {
   
   // Get available tables (for reservations)
   const availableTables = tables.filter(table => 
-    table.status === 'available' || (selectedTable && table.id === selectedTable.id)
+    table.status === 'available' || (formInitialData && table.id === formInitialData.id)
   );
   
   // Get active reservations and waitlist
@@ -807,7 +808,7 @@ const Tables = () => {
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button
-                            onClick={() => setSelectedTable(table) || setActiveTab('floor-plan')}
+                            onClick={() => setSelectedTable(table)}
                             className="text-primary hover:text-primary-dark font-medium mr-3"
                           >
                             View
