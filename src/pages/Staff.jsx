@@ -295,7 +295,6 @@ const Staff = () => {
           </div>
           
           </div>
-        </div>
 
         {/* Search and Controls */}
         <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
@@ -523,7 +522,6 @@ const Staff = () => {
               </div>
             </div>
           </motion.div>
-        </div>
 
         {/* Staff List */}
         <div className="bg-white dark:bg-surface-800 rounded-xl shadow-card border border-surface-200 dark:border-surface-700 overflow-hidden">
