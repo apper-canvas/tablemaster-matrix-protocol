@@ -5,22 +5,22 @@ import { getIcon } from '../utils/iconUtils';
 import MenuItem from './MenuItem';
 
 // Custom wrapper component with default parameters instead of defaultProps
-const DroppableWrapper = (props) => {
-  const {
-    droppableId,
-    type = 'DEFAULT',
-    direction = 'vertical',
-    ignoreContainerClipping = false,
-    isDropDisabled = false,
-    isCombineEnabled = false,
-    children,
-    ...restProps
-  } = props;
-  
+const DroppableWrapper = ({
+  droppableId,
+  type = 'DEFAULT',
+  direction = 'vertical',
+  ignoreContainerClipping = false,
+  isDropDisabled = false,
+  isCombineEnabled = false,
+  children,
+  ...restProps
+}) => {
+
   return (
     <LibDroppable 
-      droppableId={droppableId} 
-      type={type} direction={direction} ignoreContainerClipping={ignoreContainerClipping} isDropDisabled={isDropDisabled} isCombineEnabled={isCombineEnabled} {...restProps}>
+      droppableId={droppableId}
+      type={type} direction={direction}
+      ignoreContainerClipping={ignoreContainerClipping} isDropDisabled={isDropDisabled} isCombineEnabled={isCombineEnabled} {...restProps}>
       {children}
     </LibDroppable>
   );
