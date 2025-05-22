@@ -460,6 +460,7 @@ const WasteLogForm = ({ ingredient, onSubmit, onCancel }) => {
 // Main Inventory Component
 const Inventory = () => {
   const [ingredients, setIngredients] = useState({ byId: {}, allIds: [] });
+  const dispatch = useDispatch();
   const [allIngredients, setAllIngredients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -811,6 +812,23 @@ const Inventory = () => {
       return;
     }
 
+    // Update each item's stock
+    po.items.forEach(item => {
+      dispatch(addStock({
+        ingredientId: item.ingredientId,
+        quantity: item.quantity,
+        date: new Date().toISOString().split('T')[0]
+      }));
+    });
+    // Update PO status
+    dispatch(updatePurchaseOrderStatus({
+      id: po.id,
+      status: 'received'
+    }));
+    
+    toast.success('Purchase order received successfully');
+  };
+  
   };
   
   return (
@@ -925,7 +943,7 @@ const Inventory = () => {
                   <span>Add Ingredient</span>
                 </button>
               </div>
-              
+              )}
               {/* Ingredients Table */}
               <div className="card overflow-hidden">
                 <div className="overflow-x-auto">
@@ -1748,38 +1766,9 @@ const Inventory = () => {
           )}
         </AnimatePresence>
       </div>
-    </div>
-    });
-  };
-  
-  // Complete the handleReceivePO function
-  const handleReceivePO = (po) => {
-    if (po.status === 'received') {
-      toast.info('This order has already been received');
-      return;
-    }
-
-    if (!window.confirm(`Mark this purchase order as received? This will add the items to your inventory.`)) {
-      return;
-    }
-
-    // Update each item's stock
-    po.items.forEach(item => {
-      dispatch(addStock({
-        ingredientId: item.ingredientId,
-        quantity: item.quantity,
-        date: new Date().toISOString().split('T')[0]
-      }));
-    });
-    // Update PO status
-    dispatch(updatePurchaseOrderStatus({
-      id: po.id,
-      status: 'received'
-    }));
-    
-    toast.success('Purchase order received successfully');
     )}
   );
 };
+
 
 export default Inventory;
