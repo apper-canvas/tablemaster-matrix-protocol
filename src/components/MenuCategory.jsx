@@ -15,7 +15,6 @@ const DroppableWrapper = ({
   children,
   ...restProps
 }) => {
-
   return (
     <LibDroppable 
       droppableId={droppableId}

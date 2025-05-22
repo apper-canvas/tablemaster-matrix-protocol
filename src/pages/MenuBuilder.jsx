@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { DragDropContext, Droppable as LibDroppable } from 'react-beautiful-dnd';
 import { toast } from 'react-toastify';
+import { DragDropContext, Droppable as LibDroppable } from 'react-beautiful-dnd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getIcon } from '../utils/iconUtils';
 
@@ -15,7 +15,6 @@ const DroppableWrapper = ({
   children,
   ...restProps
 }) => {
-
   return (
     <LibDroppable 
       droppableId={droppableId}
