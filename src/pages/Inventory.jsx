@@ -265,7 +265,6 @@ const IngredientForm = ({ ingredient, onSubmit, onCancel }) => {
           onClick={onCancel}
           className="btn btn-outline"
         >
-  </form>
           Cancel
         </button>
         <button
