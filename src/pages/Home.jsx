@@ -255,7 +255,7 @@ function Home() {
   };
 
   return (
-    <>
+    <div className="app-container py-8">
       <div className="mb-8 space-y-2">
         <motion.h1 
           className="text-3xl font-bold"
@@ -476,8 +476,7 @@ function Home() {
           </motion.div>
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div 
             className="lg:col-span-2 card p-6"
             initial={{ opacity: 0, y: 20 }}
@@ -594,12 +593,9 @@ function Home() {
               </div>
             </div>
           </motion.div>
-          </div>
-        </>
+        </div>
       )}
-      
-      </div>
-    </>
+    </div>
   );
 }
 
