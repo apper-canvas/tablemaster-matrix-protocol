@@ -1,5 +1,5 @@
-import { useState, useEffect, createContext } from 'react';
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, createContext, useContext } from 'react';
+import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,10 +24,12 @@ const Header = ({ darkMode, toggleDarkMode }) => {
   const MenuIcon = getIcon('menu');
   const MoonIcon = getIcon('moon');
   const SunIcon = getIcon('sun');
+  const LogOutIcon = getIcon('logOut');
   const RestaurantIcon = getIcon('utensils');
   
-  const [isMenuOpen, setIsMenuOpen] = useState(false);  
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
+  const { logout } = useContext(AuthContext);
   
   return (
     <header className="sticky top-0 z-40 w-full bg-white dark:bg-surface-800 shadow-sm border-b border-surface-200 dark:border-surface-700">
@@ -63,7 +65,20 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               <Link to="/staff" className="text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light px-3 py-2 text-sm font-medium">
                 Staff
               </Link>
+              <div className="hidden md:flex md:items-center md:border-l md:border-surface-200 md:dark:border-surface-700 md:ml-4 md:pl-4">
+                <button
+                  onClick={logout}
+                  className="text-surface-600 hover:text-red-500 dark:text-surface-300 dark:hover:text-red-400 px-3 py-2 text-sm font-medium flex items-center gap-1"
+                >
+                  <LogOutIcon className="h-4 w-4" />
+                  Logout
+                </button>
+              </div>
             </nav>
+          </div>
+          
+          <div className="hidden md:flex md:items-center">
+            {/* Desktop logout button moved to the nav section above */}
           </div>
           
           <div className="flex items-center gap-4">
@@ -113,6 +128,14 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               <Link to="/staff" className="px-3 py-2 text-sm font-medium text-surface-600 hover:text-primary dark:text-surface-300 dark:hover:text-primary-light">
                 Staff
               </Link>
+              <div className="border-t border-surface-200 dark:border-surface-700 mt-2 pt-2">
+                <button
+                  onClick={logout}
+                  className="w-full text-left px-3 py-2 text-sm font-medium text-red-500 hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-2"
+                >
+                  <LogOutIcon className="h-4 w-4" /> Logout
+                </button>
+              </div>
             </nav>
           </div>
         )}
