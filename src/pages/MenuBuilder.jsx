@@ -1,6 +1,27 @@
 import { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
 import { DragDropContext, Droppable as LibDroppable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable as LibDroppable } from 'react-beautiful-dnd';
+
+// Custom wrapper component with default parameters instead of defaultProps
+const DroppableWrapper = ({
+  droppableId,
+  type = 'DEFAULT',
+  direction = 'vertical',
+  ignoreContainerClipping = false,
+  isDropDisabled = false,
+  isCombineEnabled = false,
+  children,
+  ...restProps
+}) => {
+  return (
+    <LibDroppable 
+      droppableId={droppableId}
+      type={type} direction={direction}
+      ignoreContainerClipping={ignoreContainerClipping} isDropDisabled={isDropDisabled} isCombineEnabled={isCombineEnabled} {...restProps}>
+      {children}
+    </LibDroppable>
+  );
+};
 import { motion, AnimatePresence } from 'framer-motion';
 import { getIcon } from '../utils/iconUtils';
 
@@ -142,7 +163,7 @@ const MenuBuilder = () => {
         order: index
       }));
       
-      setMenuData({
+          <DroppableWrapper droppableId="categories" type="category">
         ...menuData,
         categories: updatedCategories
       });
@@ -166,7 +187,7 @@ const MenuBuilder = () => {
         newItems.splice(destination.index, 0, movedItem);
         
         // Update order property of all items
-        const updatedItems = newItems.map((item, index) => ({
+          </DroppableWrapper>
           ...item,
           order: index
         }));
@@ -219,7 +240,7 @@ const MenuBuilder = () => {
         };
         newCategories[destCategoryIndex] = {
           ...newCategories[destCategoryIndex],
-          items: updatedDestItems
+          <DroppableWrapper droppableId="deleted-items" type="item">
         };
         
         setMenuData({
@@ -237,7 +258,7 @@ const MenuBuilder = () => {
   // Function to add a new category
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) {
-      toast.error("Category name is required");
+          </DroppableWrapper>
       return;
     }
     
