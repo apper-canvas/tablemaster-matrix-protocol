@@ -3,8 +3,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { format, parseISO, addMinutes } from 'date-fns';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HexColorPicker } from 'react-colorful';
 import { getIcon } from '../utils/iconUtils';
 import TableFloorPlan from '../components/TableFloorPlan';
@@ -567,8 +565,7 @@ const Tables = () => {
   const reservations = useSelector(state => state.tables.reservations);
   const waitlist = useSelector(state => state.tables.waitlist);
   
-  const [activeTab, setActiveTab] = useState('floor-plan');
-  const [selectedTable, setSelectedTable] = useState(null);
+  const [activeTab, setActiveTab] = useState('tables-list');
   const [isEditMode, setIsEditMode] = useState(false);
   const [modalState, setModalState] = useState({
     tableForm: false,
@@ -593,12 +590,9 @@ const Tables = () => {
   const EditIcon = getIcon('edit');
   const TrashIcon = getIcon('trash');
   const RefreshIcon = getIcon('refresh-cw');
-  const UserIcon = getIcon('user');
   const CheckIcon = getIcon('check');
   const XIcon = getIcon('x');
-  const ClockIcon = getIcon('clock');
   const PhoneIcon = getIcon('phone');
-  const CleaningIcon = getIcon('spray-can');
   const MoveIcon = getIcon('move');
   const BookmarkIcon = getIcon('bookmark');
   const ListIcon = getIcon('list');
@@ -735,15 +729,6 @@ const Tables = () => {
         <div className="border-b border-surface-200 dark:border-surface-700">
           <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
             <Tab
-              active={activeTab === 'floor-plan'}
-              onClick={() => setActiveTab('floor-plan')}
-            >
-              <div className="flex items-center">
-                <BookmarkIcon className="w-4 h-4 mr-2" />
-                Floor Plan
-              </div>
-            </Tab>
-            <Tab
               active={activeTab === 'tables-list'}
               onClick={() => setActiveTab('tables-list')}
             >
@@ -775,196 +760,6 @@ const Tables = () => {
         
         {/* Tab content */}
         <div className="bg-white dark:bg-surface-800 rounded-xl shadow-card border border-surface-200 dark:border-surface-700 overflow-hidden">
-          {/* Floor Plan Tab */}
-          {activeTab === 'floor-plan' && (
-            <div className="p-6">
-              <div className="flex flex-wrap justify-between items-center mb-4">
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => openTableForm()}
-                    className="btn btn-primary"
-                  >
-                    <PlusIcon className="w-4 h-4 mr-2" />
-                    Add Table
-                  </button>
-                  <button
-                    onClick={() => setIsEditMode(!isEditMode)}
-                    className={`btn ${isEditMode ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'btn-outline'}`}
-                  >
-                    <MoveIcon className="w-4 h-4 mr-2" />
-                    {isEditMode ? 'Exit Edit Mode' : 'Edit Table Positions'}
-                  </button>
-                </div>
-                
-                {/* Section filters can be added here */}
-              </div>
-              
-              <div className="flex flex-col lg:flex-row gap-6">
-                {/* Floor Plan */}
-                <div className="lg:w-2/3">
-                  <DndProvider backend={HTML5Backend}>
-                    <TableFloorPlan
-                      tables={tables}
-                      sections={sections}
-                      selectedTable={selectedTable}
-                      onSelectTable={setSelectedTable}
-                      isEditMode={isEditMode}
-                    />
-                  </DndProvider>
-                </div>
-                
-                {/* Table Details Panel */}
-                <div className="lg:w-1/3">
-                  <div className="card p-4 h-full flex flex-col">
-                    {selectedTable ? (
-                      <>
-                        <div className="flex justify-between items-start mb-4">
-                          <h3 className="text-xl font-semibold">Table {selectedTable.number}</h3>
-                          <div className="flex space-x-2">
-                            <button 
-                              onClick={() => openTableForm(selectedTable)}
-                              className="p-2 text-surface-500 hover:text-primary rounded-full hover:bg-surface-100 dark:hover:bg-surface-700"
-                              title="Edit Table"
-                            >
-                              <EditIcon className="w-5 h-5" />
-                            </button>
-                            <button 
-                              onClick={() => openConfirmationModal({
-                                type: 'delete-table',
-                                id: selectedTable.id
-                              })}
-                              className="p-2 text-surface-500 hover:text-red-500 rounded-full hover:bg-surface-100 dark:hover:bg-surface-700"
-                              title="Delete Table"
-                            >
-                              <TrashIcon className="w-5 h-5" />
-                            </button>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-4 flex space-x-2 text-sm">
-                          <span className={`px-2 py-1 rounded-full ${
-                            selectedTable.status === 'available' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                            selectedTable.status === 'occupied' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                            selectedTable.status === 'reserved' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                          }`}>
-                            {selectedTable.status.charAt(0).toUpperCase() + selectedTable.status.slice(1)}
-                          </span>
-                          <span className="px-2 py-1 rounded-full bg-surface-100 text-surface-800 dark:bg-surface-700 dark:text-surface-300">
-                            {selectedTable.capacity} seats
-                          </span>
-                          <span className="px-2 py-1 rounded-full bg-surface-100 text-surface-800 dark:bg-surface-700 dark:text-surface-300">
-                            {sections.find(s => s.id === selectedTable.section)?.name || selectedTable.section}
-                          </span>
-                        </div>
-                        
-                        {/* Status details based on current status */}
-                        {selectedTable.status === 'occupied' && (
-                          <div className="mb-4 p-3 bg-surface-50 dark:bg-surface-700/50 rounded-lg">
-                            <h4 className="font-medium mb-2 text-red-600 dark:text-red-400">Currently Occupied</h4>
-                            <div className="space-y-2 text-sm">
-                              <p><span className="font-medium">Customer:</span> {selectedTable.customer}</p>
-                              {selectedTable.timeSeated && (
-                                <p><span className="font-medium">Seated at:</span> {formatTime(selectedTable.timeSeated)}</p>
-                              )}
-                              {selectedTable.estimatedEndTime && (
-                                <p><span className="font-medium">Expected end:</span> {formatTime(selectedTable.estimatedEndTime)}</p>
-                              )}
-                              {selectedTable.server && (
-                                <p><span className="font-medium">Server:</span> {selectedTable.server}</p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {selectedTable.status === 'reserved' && (
-                          <div className="mb-4 p-3 bg-surface-50 dark:bg-surface-700/50 rounded-lg">
-                            <h4 className="font-medium mb-2 text-blue-600 dark:text-blue-400">Reserved</h4>
-                            <div className="space-y-2 text-sm">
-                              <p><span className="font-medium">Customer:</span> {selectedTable.customerName}</p>
-                              {selectedTable.phoneNumber && (
-                                <p><span className="font-medium">Phone:</span> {selectedTable.phoneNumber}</p>
-                              )}
-                              {selectedTable.reservationTime && (
-                                <p><span className="font-medium">Time:</span> {formatTime(selectedTable.reservationTime)}</p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Status change buttons */}
-                        <div className="mt-auto">
-                          <h4 className="font-medium mb-2">Change Status</h4>
-                          <div className="grid grid-cols-2 gap-2">
-                            {selectedTable.status !== 'available' && (
-                              <button
-                                onClick={() => handleStatusChange(selectedTable.id, 'available')}
-                                className="btn bg-green-500 hover:bg-green-600 text-white"
-                              >
-                                <CheckIcon className="w-4 h-4 mr-2" />
-                                Available
-                              </button>
-                            )}
-                            
-                            {selectedTable.status !== 'occupied' && (
-                              <button
-                                onClick={() => handleStatusChange(selectedTable.id, 'occupied', {
-                                  customer: 'Walk-in Customer',
-                                  timeSeated: new Date().toISOString(),
-                                  estimatedEndTime: new Date(Date.now() + 60 * 60 * 1000).toISOString()
-                                })}
-                                className="btn bg-red-500 hover:bg-red-600 text-white"
-                              >
-                                <UserIcon className="w-4 h-4 mr-2" />
-                                Occupy
-                              </button>
-                            )}
-                            
-                            {selectedTable.status !== 'reserved' && (
-                              <button
-                                onClick={() => openReservationForm({
-                                  tableId: selectedTable.id,
-                                  partySize: selectedTable.capacity
-                                })}
-                                className="btn bg-blue-500 hover:bg-blue-600 text-white"
-                              >
-                                <ClockIcon className="w-4 h-4 mr-2" />
-                                Reserve
-                              </button>
-                            )}
-                            
-                            {selectedTable.status !== 'cleaning' && (
-                              <button
-                                onClick={() => handleStatusChange(selectedTable.id, 'cleaning')}
-                                className="btn bg-yellow-500 hover:bg-yellow-600 text-white"
-                              >
-                                <CleaningIcon className="w-4 h-4 mr-2" />
-                                Cleaning
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-center p-6 text-surface-500 dark:text-surface-400">
-                        <BookmarkIcon className="w-12 h-12 mb-4 opacity-50" />
-                        <h3 className="text-lg font-medium mb-2">No Table Selected</h3>
-                        <p className="mb-4">Select a table from the floor plan to see details and change its status</p>
-                        <button
-                          onClick={() => openTableForm()}
-                          className="btn btn-primary"
-                        >
-                          <PlusIcon className="w-4 h-4 mr-2" />
-                          Add New Table
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
           {/* Table List Tab */}
           {activeTab === 'tables-list' && (
             <div className="p-6">
